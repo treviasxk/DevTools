@@ -1,0 +1,16 @@
+{
+  "name": "com.treviasxk.devtools",
+  "version": "0.1.0",
+  "displayName": "DevTools",
+  "description": "DevTools is a system.",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "documentationUrl": "https://github.com/treviasxk/DevTools",
+  "changelogUrl": "https://github.com/treviasxk/DevTools/releases",
+  "licensesUrl": "https://github.com/treviasxk/DevTools/blob/main/LICENSE",
+  "author": {
+    "name": "Trevias Xk",
+    "email": "trevias@live.com",
+    "url": "https://github.com/treviasxk"
+  }
+}
