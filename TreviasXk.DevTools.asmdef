@@ -1,7 +1,9 @@
 {
     "name": "TreviasXk.DevTools",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:2165457e5b0922b4ca8a1556587954ab"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -9,6 +11,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.treviasxk.ubuild",
+            "expression": "0.1.0",
+            "define": "UBuild"
+        }
+    ],
     "noEngineReferences": false
 }
