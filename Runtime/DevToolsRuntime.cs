@@ -15,13 +15,10 @@ namespace DevTools {
         static Material mat;
         static Mesh Capsule, Sphere;
 
-
+        #if UNITY_EDITOR && UBuild
         [InitializeOnLoadMethod]
-        static void Init(){
-            #if UBuild
-                UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.PlayerDevelopment);
-            #endif
-        }
+        static void Init() => UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.PlayerDevelopment);
+        #endif
 
         [RuntimeInitializeOnLoadMethod]
         static void InitRuntime(){
