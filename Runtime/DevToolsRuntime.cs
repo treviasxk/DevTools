@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 namespace DevTools {
-    [InitializeOnLoad]
     public class DevToolsRuntime {
         public GameObject test;
         public static Dictionary<string, GUI.WindowFunction> ListWindows = new Dictionary<string, GUI.WindowFunction>();
@@ -16,7 +15,9 @@ namespace DevTools {
         static Material mat;
         static Mesh Capsule, Sphere;
 
-        static DevToolsRuntime(){
+
+        [InitializeOnLoadMethod]
+        static void Init(){
             #if UBuild
                 UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.PlayerDevelopment);
             #endif
