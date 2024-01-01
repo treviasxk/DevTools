@@ -17,7 +17,7 @@ namespace DevTools {
 
         #if UNITY_EDITOR && UBuild
         [InitializeOnLoadMethod]
-        static void Init() => UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.PlayerDevelopment);
+        static void Init() => UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.Player | UBuild.UBuildEditor.ConfigBuild.Development);
         #endif
 
         [RuntimeInitializeOnLoadMethod]
