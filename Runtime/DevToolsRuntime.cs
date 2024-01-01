@@ -19,7 +19,7 @@ namespace DevTools {
         [InitializeOnLoadMethod]
         static void Init(){
             #if UBuild
-                UBuild.UBuildEditor.PackagesInBuildDev.Add("com.treviasxk.devtools", UBuild.UBuildEditor.PackageBuildSubtarget.Player);
+                UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.PlayerDevelopment);
             #endif
         }
 
