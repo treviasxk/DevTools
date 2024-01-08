@@ -14,10 +14,10 @@ namespace DevTools {
         static GUIStyle style = new GUIStyle();
         static Material mat;
         static Mesh Capsule, Sphere;
-
+        
         #if UNITY_EDITOR && UBuild
         [InitializeOnLoadMethod]
-        static void Init() => UBuild.UBuildEditor.PackageConfigBuild.Add("com.treviasxk.devtools", UBuild.UBuildEditor.ConfigBuild.Player | UBuild.UBuildEditor.ConfigBuild.Development);
+        static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
         #endif
 
         [RuntimeInitializeOnLoadMethod]
