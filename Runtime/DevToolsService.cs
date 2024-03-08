@@ -1,18 +1,23 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+
 namespace DevTools {
     public class DevToolsService : MonoBehaviour {
         static List<ChartGraph> ListGraph;
         ChartGraph FPS;
         static Material mat;
-
+        public InputActionAsset inputActionsAssets;
+        PlayerInput playerInput;
 
         void Start(){
+            playerInput = GetComponent<PlayerInput>();
+            playerInput.actions = inputActionsAssets;
+            playerInput.currentActionMap = inputActionsAssets.actionMaps[0];
             ListGraph = new List<ChartGraph>();
             mat = new Material(Shader.Find("Hidden/Internal-Colored"));
             DontDestroyOnLoad(gameObject);
@@ -60,16 +65,17 @@ namespace DevTools {
 
             statsText = sb.ToString();
 
-            if(Input.GetKeyDown(KeyCode.F1)){
+            
+            if(playerInput.currentActionMap.FindAction("DevTools").triggered){
                 DevToolsRuntime.isOpenDevTools = !DevToolsRuntime.isOpenDevTools;
                 DevToolsRuntime.isOverlays = DevToolsRuntime.isOpenDevTools;
                 DevToolsRuntime.SelectedObject = null;
             }
 
-            if(Input.GetKeyDown(KeyCode.F2))
+            if(playerInput.currentActionMap.FindAction("Inspector").triggered)
                 DevToolsRuntime.isOpenDeveloperTools = !DevToolsRuntime.isOpenDeveloperTools;
 
-            if(Input.GetKeyDown(KeyCode.F3))
+            if(playerInput.currentActionMap.FindAction("Overlays").triggered)
                 DevToolsRuntime.isOverlays = !DevToolsRuntime.isOverlays;
 
             if(DevToolsRuntime.isOpenDevTools)
@@ -111,7 +117,7 @@ namespace DevTools {
                     if(DevToolsRuntime.SelectedObject)
                         GUILayout.Window(3, new Rect(SizePerformance.x + PaddingScreen.x * 2,  PaddingScreen.y * 2 + SizePerformance.y, SizeComponents.x, SizeComponents.y), DevToolsWindow, DevToolsRuntime.SelectedObject.name == gameObject.name ? currentList.ToString() : DevToolsRuntime.SelectedObject.name);
                 }else{
-                    GUILayout.Label("  Press F1 to open/close DevToolsRuntime." + (!DevToolsRuntime.CurrentWindow.Equals(new KeyValuePair<string, GUI.WindowFunction>()) ? "\n  Press F2 to open/close current Developer Tools." : "") + "\n  Press F3 to show/hide Overlays.");
+                    GUILayout.Label("  Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentWindow.Equals(new KeyValuePair<string, GUI.WindowFunction>()) ? "\n  Press F2 to open/close current Developer Tools." : "") + "\n  Press F3 to show/hide Overlays.");
                 }
                 if(DevToolsRuntime.isOpenDeveloperTools)
                 if(!DevToolsRuntime.CurrentWindow.Equals(new KeyValuePair<string, GUI.WindowFunction>()))

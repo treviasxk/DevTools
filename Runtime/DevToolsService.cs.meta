@@ -4,9 +4,8 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - visualTreeAsset: {fileID: 9197481963319205126, guid: 8e373b3c9dea9e046ac790629f15c6e5,
+  - inputActionsAssets: {fileID: -944628639613478452, guid: 878d493e63e89124face9b0aa1404a15,
       type: 3}
-  - panelSettings: {fileID: 11400000, guid: 8c3a732781ac7a144b8b8f404d7163c2, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

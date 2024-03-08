@@ -1,0 +1,86 @@
+{
+    "name": "DevToolsInputActions",
+    "maps": [
+        {
+            "name": "DevTools",
+            "id": "7495c328-f4ae-4d25-8a5d-600dfe9e8419",
+            "actions": [
+                {
+                    "name": "DevTools",
+                    "type": "Button",
+                    "id": "fe9dd0b2-a94a-434d-98ee-de5e504f2342",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Inspector",
+                    "type": "Button",
+                    "id": "df3a47d1-f314-4e04-8b61-4692beb98bd8",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Overlays",
+                    "type": "Button",
+                    "id": "bc16fa7d-4ab6-43b4-8b32-c64921515cad",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "66bec4c8-3fb2-4d0e-b3e5-44ce16088f2b",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DevTools",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a0b5c32f-b070-4776-b7b2-52f191f9195b",
+                    "path": "<Keyboard>/f3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Overlays",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "85b0b6fd-21d4-423f-82d0-8fb7326a5deb",
+                    "path": "<Keyboard>/f2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Inspector",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        {
+            "name": "Keyboard",
+            "bindingGroup": "Keyboard",
+            "devices": [
+                {
+                    "devicePath": "<Keyboard>",
+                    "isOptional": false,
+                    "isOR": false
+                }
+            ]
+        }
+    ]
+}

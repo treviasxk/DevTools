@@ -2,7 +2,8 @@
     "name": "TreviasXk.DevTools",
     "rootNamespace": "",
     "references": [
-        "GUID:2165457e5b0922b4ca8a1556587954ab"
+        "GUID:2165457e5b0922b4ca8a1556587954ab",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

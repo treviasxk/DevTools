@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 namespace DevTools {
     public class DevToolsRuntime {
-        public GameObject test;
         public static Dictionary<string, GUI.WindowFunction> ListWindows = new Dictionary<string, GUI.WindowFunction>();
         public static Dictionary<string, GameObject> ListGameObjects = new Dictionary<string, GameObject>();
         public static KeyValuePair<string, GUI.WindowFunction> CurrentWindow;
@@ -41,6 +41,7 @@ namespace DevTools {
 
             GameObject service = new GameObject("[DevTools Service]");
             service.AddComponent<DevToolsService>();
+            service.AddComponent<PlayerInput>();
         }
 
 
