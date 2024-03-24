@@ -7,21 +7,84 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace DevTools {
+
+
+    public class DrawLineData{
+        public Vector3 from, to;
+        public Color color;
+        public float timer;
+    }
+
+    public class DrawTextData{
+        public string text;
+        public Vector3 position;
+        public Color color;
+        public Vector2 positionOff;
+        public Texture2D texture2D;
+        public float timer;
+    }
+
+    public class DrawShpereData{
+        public Vector3 position;
+        public Color color;
+        public float radius;
+        public float timer;
+    }
+
+    public class DrawCubeData{
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 scale;
+        public Color color;
+        public float timer;
+    }
+
+    public class DrawCylinderData{
+        public Vector3 position;
+        public Quaternion rotation;
+        public Color color;
+        public float height;
+        public float radius;
+        public float timer;
+    }
+
+    public class DrawCapsuleData{
+        public Vector3 position;
+        public Quaternion rotation;
+        public Color color;
+        public float height;
+        public float radius;
+        public float timer;
+    }
+
     public class DevToolsService : MonoBehaviour {
         static List<ChartGraph> ListGraph;
         ChartGraph FPS;
-        static Material mat;
+        public static Material mat, mat2;
         public InputActionAsset inputActionsAssets;
         PlayerInput playerInput;
+        public static Mesh Capsule, Sphere, Cube, Cylinder;
+        void Awake(){
+            DevToolsRuntime.ListWindows.Clear();
+            DevToolsRuntime.ListGameObjects.Clear();
+            DevToolsRuntime.ListLineData.Clear();
+            DevToolsRuntime.ListTextData.Clear();
+            DevToolsRuntime.ListSphereData.Clear();
+            DevToolsRuntime.ListCapsuleData.Clear();
+            DevToolsRuntime.ListCubeData.Clear();
+            DevToolsRuntime.ListCylinderData.Clear();
+            
+            ListGraph = new List<ChartGraph>();
+            mat = new Material(Shader.Find("Hidden/Internal-Colored"));
+            mat2 = new Material(Shader.Find("Hidden/Internal-Colored"));
+            DontDestroyOnLoad(gameObject);
+            FPS = CreateGraph(500, "FPS", new Rect(1, 17, 198, 50));
+        }
 
         void Start(){
             playerInput = GetComponent<PlayerInput>();
             playerInput.actions = inputActionsAssets;
             playerInput.currentActionMap = inputActionsAssets.actionMaps[0];
-            ListGraph = new List<ChartGraph>();
-            mat = new Material(Shader.Find("Hidden/Internal-Colored"));
-            DontDestroyOnLoad(gameObject);
-            FPS = CreateGraph(500, "FPS", new Rect(1, 17, 198, 50));
         }
 
         void FixedUpdate(){
@@ -53,7 +116,15 @@ namespace DevTools {
             systemUsedMemoryRecorder.Dispose();
         }
 
+
+        bool isOverlaysTmp = false;
         void Update(){
+            // Renders
+            DrawSpheres();
+            DrawCubes();
+            DrawCapsules();
+            DrawCylinders();
+            
             var sb = new StringBuilder(500);
             sb.AppendLine($"Platform: {Application.platform}");
             if (totalReservedMemoryRecorder.Valid)
@@ -65,10 +136,14 @@ namespace DevTools {
 
             statsText = sb.ToString();
 
-            
             if(playerInput.currentActionMap.FindAction("DevTools").triggered){
                 DevToolsRuntime.isOpenDevTools = !DevToolsRuntime.isOpenDevTools;
-                DevToolsRuntime.isOverlays = DevToolsRuntime.isOpenDevTools;
+                if(DevToolsRuntime.isOpenDevTools){
+                    isOverlaysTmp = DevToolsRuntime.isOverlays;
+                    DevToolsRuntime.isOverlays = true;
+                }else{
+                    DevToolsRuntime.isOverlays = isOverlaysTmp;
+                }
                 DevToolsRuntime.SelectedObject = null;
             }
 
@@ -95,14 +170,28 @@ namespace DevTools {
         Vector2 SizePerformance = new(200, 70);
         Vector2 SizeManager = new(200, 112);
 
+        static GUIStyle style = new GUIStyle();
+        void DrawText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){
+            var position = Camera.main.WorldToScreenPoint(target);
+            var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
+            style.normal.textColor = color;
+            style.normal.background = texture2D;
+            style.alignment = TextAnchor.MiddleCenter;
+            if(position.z > 0)
+                GUI.Label(new Rect(position.x - (textSize.x + 10) / 2 + positionOff.x, Screen.height - position.y +  positionOff.y, textSize.x + 10, textSize.y), text, style);
+        }
 
         void OnGUI(){
             if(Debug.isDebugBuild){
+                   
+                // Draw text objects
                 if(DevToolsRuntime.isOverlays)
-                foreach(var item in DevToolsRuntime.ListGameObjects.Values.Distinct())
-                    if(item)
-                        DevToolsRuntime.DrawString(item.name, item.transform.position, Color.white, Texture2D.grayTexture);
-                    
+                foreach(var item in DevToolsRuntime.ListGameObjects.Values.Distinct().Where(item => item))
+                    DrawText(item.name, item.transform.position, Color.white, Texture2D.grayTexture);
+                
+                DrawText();
+                DrawLines();
+
                 GUI.backgroundColor = Color.black;
                 GUI.color = Color.white;
                 // Layout size
@@ -124,7 +213,96 @@ namespace DevTools {
                     GUILayout.Window(4, new Rect(Screen.width - SizeInspector.x - PaddingScreen.x, PaddingScreen.y, SizeInspector.x, SizeInspector.y), DevToolsRuntime.CurrentWindow.Value, DevToolsRuntime.CurrentWindow.Key);
             }
         }
-        
+
+
+        void DrawSpheres(){
+            for(int i = 0; i < DevToolsRuntime.ListSphereData.Count; i++){
+                var shpereData = DevToolsRuntime.ListSphereData[i];
+
+                if(DevToolsRuntime.isOverlays){
+                    mat2.color = shpereData.color;
+                    Graphics.DrawMesh(Sphere, Matrix4x4.TRS(shpereData.position, Quaternion.identity, Vector3.one * shpereData.radius), mat2, 0);
+                }
+
+                if(shpereData.timer < Time.time)
+                    DevToolsRuntime.ListSphereData.RemoveAt(i);
+            }
+        }
+
+        void DrawCubes(){
+            for(int i = 0; i < DevToolsRuntime.ListCubeData.Count; i++){
+                var cubeData = DevToolsRuntime.ListCubeData[i];
+
+                if(DevToolsRuntime.isOverlays){
+                    mat.color = cubeData.color;
+                    Graphics.DrawMesh(Cube, Matrix4x4.TRS(cubeData.position, cubeData.rotation, cubeData.scale), mat, 0);
+                }
+
+                if(cubeData.timer < Time.time)
+                    DevToolsRuntime.ListCubeData.RemoveAt(i);
+            } 
+        }
+
+        void DrawCapsules(){
+            for(int i = 0; i < DevToolsRuntime.ListCapsuleData.Count; i++){
+                var capsuleData = DevToolsRuntime.ListCapsuleData[i];
+
+                if(DevToolsRuntime.isOverlays){
+                    mat.color = capsuleData.color;
+                    Graphics.DrawMesh(Capsule, Matrix4x4.TRS(capsuleData.position, capsuleData.rotation, Vector3.one * capsuleData.radius + Vector3.up * capsuleData.height), mat, 0);
+                }
+
+                if(capsuleData.timer < Time.time)
+                    DevToolsRuntime.ListCapsuleData.RemoveAt(i);
+            }
+        }
+
+        void DrawCylinders(){
+            for(int i = 0; i < DevToolsRuntime.ListCylinderData.Count; i++){
+                var cylinderData = DevToolsRuntime.ListCylinderData[i];
+
+                if(DevToolsRuntime.isOverlays){
+                    mat.color = cylinderData.color;
+                    Graphics.DrawMesh(Cylinder, Matrix4x4.TRS(cylinderData.position, cylinderData.rotation, Vector3.one * cylinderData.radius + Vector3.up * cylinderData.height), mat, 0);
+                }
+
+                if(cylinderData.timer < Time.time)
+                    DevToolsRuntime.ListCylinderData.RemoveAt(i);
+            }
+        }
+
+        void DrawLines(){
+            if(Event.current.type != EventType.Repaint)
+            for(int i = 0; i < DevToolsRuntime.ListLineData.Count; i++){
+                var line = DevToolsRuntime.ListLineData[i];
+
+                if(DevToolsRuntime.isOverlays){
+                    GL.PushMatrix();
+                    mat.SetPass(0);
+                    GL.Begin(GL.LINES);
+                    GL.Color(line.color);
+                    GL.Vertex(line.from);
+                    GL.Vertex(line.to);
+                    GL.End();
+                    GL.PopMatrix();
+                }
+                if(line.timer < Time.time)
+                    DevToolsRuntime.ListLineData.RemoveAt(i);
+            }
+        }
+
+        void DrawText(){
+            for(int i = 0; i < DevToolsRuntime.ListTextData.Count; i++){
+                var textData = DevToolsRuntime.ListTextData[i];
+
+                if(DevToolsRuntime.isOverlays)
+                    DrawText(textData.text, textData.position, textData.color, textData.texture2D, textData.positionOff);
+
+                if(textData.timer < Time.time)
+                    DevToolsRuntime.ListTextData.RemoveAt(i);
+            }
+        }
+
         Vector2 scrollPosition = Vector2.zero;
         Vector2 scrollPosition2 = Vector2.zero;
         Vector2 scrollPosition3 = Vector2.zero;
@@ -172,7 +350,7 @@ namespace DevTools {
             int quantity = 0;
             switch(currentList){
                 case typeList.Components:
-                quantity = DevToolsRuntime.ListGameObjects.Where(item => item.Value == DevToolsRuntime.SelectedObject).Count();
+                    quantity = DevToolsRuntime.ListGameObjects.Where(item => item.Value == DevToolsRuntime.SelectedObject).Count();
                 break;
                 case typeList.Scenes:
                     quantity = SceneManager.sceneCountInBuildSettings;
@@ -183,6 +361,11 @@ namespace DevTools {
                 case typeList.Resolution:
                     quantity = Screen.resolutions.Length;
                 break;
+            }
+
+            if(quantity == 0){
+                DevToolsRuntime.SelectedObject = null;
+                return;
             }
 
             if((quantity * 26) >= Screen.height - (PaddingScreen.y * 5 + SizePerformance.y)){
@@ -196,10 +379,13 @@ namespace DevTools {
             switch(currentList){
                 case typeList.Components:
                     var Components = DevToolsRuntime.ListGameObjects.Where(item => item.Value == DevToolsRuntime.SelectedObject);
-                    foreach(var item in Components)
+                    foreach(var item in Components.Where(item => item.Value))
                         if(GUILayout.Button(item.Key)){
-                            DevToolsRuntime.isOpenDeveloperTools = true;
-                            DevToolsRuntime.CurrentWindow = DevToolsRuntime.ListWindows.First(item2 => item2.Key == item.Key);
+                            var value = DevToolsRuntime.ListWindows.First(item2 => item2.Key == item.Key);
+                            if(value.Value != null){
+                                DevToolsRuntime.isOpenDeveloperTools = true;
+                                DevToolsRuntime.CurrentWindow = DevToolsRuntime.ListWindows.First(item2 => item2.Key == item.Key);
+                            }
                         }
                 break;
                 case typeList.Scenes:
@@ -219,7 +405,7 @@ namespace DevTools {
                             QualitySettings.SetQualityLevel(i, true);
 
                     GUILayout.Label("FrameRate: " + Application.targetFrameRate); // 2
-                    Application.targetFrameRate = (int)GUILayout.HorizontalSlider(Application.targetFrameRate, 0, 500); // 3
+                    Application.targetFrameRate = (int)GUILayout.HorizontalSlider(Application.targetFrameRate, -1, 500); // 3
 
                     GUILayout.Label("VSync: " + QualitySettings.vSyncCount); // 4
                     QualitySettings.vSyncCount = (int)GUILayout.HorizontalSlider(QualitySettings.vSyncCount, 0, 4); // 5
@@ -312,7 +498,6 @@ namespace DevTools {
                     graph.values.RemoveAt(0);
 
                 GL.PushMatrix();
-
                 GL.Clear(true, false, Color.black);
                 mat.color = Color.white;
                 mat.SetPass(0);
@@ -363,6 +548,7 @@ namespace DevTools {
                     fontSize = 10
                 };
                 GUI.Label(new Rect(graph.windowRect.x,graph.windowRect.y,graph.windowRect.width,graph.windowRect.height),"<color=white>"+ graph.Name + ": " + graph.value + "</color>", style);
+           
             }
         }
 

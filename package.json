@@ -1,8 +1,11 @@
 {
   "name": "com.treviasxk.devtools",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "displayName": "DevTools",
-  "description": "DevTools is a system.",
+  "description": "DevTools is a tool to help create Debug systems. It has a simple API, organized interface and some general features. This tool will only work in the Editor and Development Builds.",
+  "dependencies": {
+    "com.unity.inputsystem": ""
+},
   "unity": "2019.1",
   "unityRelease": "0b5",
   "documentationUrl": "https://github.com/treviasxk/DevTools",

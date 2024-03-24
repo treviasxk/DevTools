@@ -6,14 +6,17 @@ namespace DevTools {
     public class DevToolsRuntime {
         public static Dictionary<string, GUI.WindowFunction> ListWindows = new Dictionary<string, GUI.WindowFunction>();
         public static Dictionary<string, GameObject> ListGameObjects = new Dictionary<string, GameObject>();
+        public static List<DrawLineData> ListLineData = new List<DrawLineData>();
+        public static List<DrawTextData> ListTextData = new List<DrawTextData>();
+        public static List<DrawShpereData> ListSphereData = new List<DrawShpereData>();
+        public static List<DrawCubeData> ListCubeData = new List<DrawCubeData>();
+        public static List<DrawCylinderData> ListCylinderData = new List<DrawCylinderData>();
+        public static List<DrawCapsuleData> ListCapsuleData = new List<DrawCapsuleData>();
         public static KeyValuePair<string, GUI.WindowFunction> CurrentWindow;
         public static GameObject SelectedObject;
         public static bool isOpenDevTools = false;
         public static bool isOpenDeveloperTools = false;
         public static bool isOverlays = false;
-        static GUIStyle style = new GUIStyle();
-        static Material mat;
-        static Mesh Capsule, Sphere;
         
         #if UNITY_EDITOR && UBuild
         [InitializeOnLoadMethod]
@@ -30,13 +33,20 @@ namespace DevTools {
             ListGameObjects.Clear();
             CurrentWindow = new KeyValuePair<string, GUI.WindowFunction>();
             
-            mat = new Material(Shader.Find("Hidden/Internal-Colored"));
             GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            Capsule = obj.GetComponent<MeshFilter>().mesh;
+            DevToolsService.Capsule = obj.GetComponent<MeshFilter>().mesh;
             GameObject.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            Sphere = obj.GetComponent<MeshFilter>().mesh;
+            DevToolsService.Sphere = obj.GetComponent<MeshFilter>().mesh;
+            GameObject.Destroy(obj);
+
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            DevToolsService.Cube = obj.GetComponent<MeshFilter>().mesh;
+            GameObject.Destroy(obj);
+
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            DevToolsService.Cylinder = obj.GetComponent<MeshFilter>().mesh;
             GameObject.Destroy(obj);
 
             GameObject service = new GameObject("[DevTools Service]");
@@ -57,45 +67,32 @@ namespace DevTools {
             }
         }
 
-        public class DrawData{
-            public Transform transform;
-            public Mesh mesh;
-            public Color color;
-        }
-
-        public static void DrawSphere(Vector3 position, float radius, Color color){
-            if(isOverlays){
-                color.a = 0.5f;
-                mat.color = color;
-                Graphics.DrawMesh(Sphere, Matrix4x4.TRS(position, Quaternion.identity, Vector3.one * radius * 2), mat, 0);
-            }
-        }
-
-        public static void DrawCube(Vector3 position, float radius, Color color){
-            if(isOverlays){
-                color.a = 0.5f;
-                mat.color = color;
-                //Graphics.DrawMesh(Sphere, Matrix4x4.TRS(position, Quaternion.identity, Vector3.one * radius * 2), mat, 0);
-            }
+        public static void DrawLine(Vector3 from, Vector3 to, Color color, float timer = 0){
+            ListLineData.Add(new DrawLineData{from = from, to = to, color = color, timer = Time.time + timer});
         }
 
 
-        public static void DrawCapsule(Vector3 start, Vector3 end, float radius, Color color){
-            if(isOverlays){
-                color.a = 0.5f;
-                mat.color = color;
-                //Graphics.DrawMesh(Capsule, Matrix4x4.TRS(position, Quaternion.identity, Vector3.one * radius * 2), mat, 0);
-            }
+        public static void DrawText(string text, Vector3 position, Color textColor, Texture2D backColor, Vector2 positionOff = new Vector2(), float timer = 0){
+            ListTextData.Add(new DrawTextData{text = text, position = position, color = textColor, texture2D = backColor, positionOff = positionOff, timer = Time.time + timer});
+        }
+        public static void DrawText(string text, Vector3 position, Color textColor, Texture2D backColor, float timer = 0, Vector2 positionOff = new Vector2()){
+            ListTextData.Add(new DrawTextData{text = text, position = position, color = textColor, texture2D = backColor, positionOff = positionOff, timer = Time.time + timer});
         }
 
-        public static void DrawString(string text, Vector3 target, Color textColor, Texture2D backColor){
-            var position = Camera.main.WorldToScreenPoint(target);
-            var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
-            style.normal.textColor = textColor;
-            style.normal.background = backColor;
-            style.alignment = TextAnchor.MiddleCenter;
-            if(position.z > 0)
-                GUI.Label(new Rect(position.x - (textSize.x + 10) / 2, Screen.height - position.y, textSize.x + 10, textSize.y), text, style);
+        public static void DrawSphere(Vector3 position, float radius, Color color, float timer = 0){
+            ListSphereData.Add(new DrawShpereData{position = position, radius = radius, color = color, timer = Time.time + timer});
+        }
+
+        public static void DrawCube(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float timer = 0){
+            ListCubeData.Add(new DrawCubeData{position = position, rotation = rotation, scale = scale, color = color, timer = Time.time + timer});
+        }
+
+        public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            ListCapsuleData.Add(new DrawCapsuleData{position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
+        }
+
+        public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            ListCylinderData.Add(new DrawCylinderData{position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
         }
     }
 }
