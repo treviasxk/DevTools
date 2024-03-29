@@ -9,13 +9,13 @@ using UnityEngine.SceneManagement;
 namespace DevTools {
 
 
-    public class DrawLineData{
+    public struct DrawLineData{
         public Vector3 from, to;
         public Color color;
         public float timer;
     }
 
-    public class DrawTextData{
+    public struct DrawTextData{
         public string text;
         public Vector3 position;
         public Color color;
@@ -24,14 +24,14 @@ namespace DevTools {
         public float timer;
     }
 
-    public class DrawShpereData{
+    public struct DrawShpereData{
         public Vector3 position;
         public Color color;
         public float radius;
         public float timer;
     }
 
-    public class DrawCubeData{
+    public struct DrawCubeData{
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 scale;
@@ -39,7 +39,7 @@ namespace DevTools {
         public float timer;
     }
 
-    public class DrawCylinderData{
+    public struct DrawCylinderData{
         public Vector3 position;
         public Quaternion rotation;
         public Color color;
@@ -48,7 +48,7 @@ namespace DevTools {
         public float timer;
     }
 
-    public class DrawCapsuleData{
+    public struct DrawCapsuleData{
         public Vector3 position;
         public Quaternion rotation;
         public Color color;
