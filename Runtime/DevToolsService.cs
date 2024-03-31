@@ -118,6 +118,7 @@ namespace DevTools {
 
 
         bool isOverlaysTmp = false;
+        CursorLockMode cursorLockMode;
         void Update(){
             // Renders
             DrawSpheres();
@@ -139,9 +140,11 @@ namespace DevTools {
             if(playerInput.currentActionMap.FindAction("DevTools").triggered){
                 DevToolsRuntime.isOpenDevTools = !DevToolsRuntime.isOpenDevTools;
                 if(DevToolsRuntime.isOpenDevTools){
+                    cursorLockMode = Cursor.lockState;
                     isOverlaysTmp = DevToolsRuntime.isOverlays;
                     DevToolsRuntime.isOverlays = true;
                 }else{
+                    Cursor.lockState = cursorLockMode;
                     DevToolsRuntime.isOverlays = isOverlaysTmp;
                 }
                 DevToolsRuntime.SelectedObject = null;
