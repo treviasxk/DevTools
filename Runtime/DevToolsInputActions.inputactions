@@ -9,7 +9,7 @@
                     "name": "DevTools",
                     "type": "Button",
                     "id": "fe9dd0b2-a94a-434d-98ee-de5e504f2342",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false

@@ -6,6 +6,9 @@ MonoImporter:
   defaultReferences:
   - inputActionsAssets: {fileID: -944628639613478452, guid: 878d493e63e89124face9b0aa1404a15,
       type: 3}
+  - visualTreeAsset: {fileID: 9197481963319205126, guid: 243ac34163d9d7c46afdfbac3726e3dd,
+      type: 3}
+  - panelSettings: {fileID: 11400000, guid: a2ad5fa981243964388a8e0205d17a47, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

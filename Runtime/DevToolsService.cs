@@ -1,12 +1,25 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 namespace DevTools {
+
+    public struct DevToolsData {
+        public int id;
+        public GameObject gameObject;
+        public List<DevToolsComponent> Components;
+    }
+
+    public struct DevToolsComponent{
+        public int id;
+        public string name;
+        public TemplateContainer templateContainer;
+    }
 
 
     public struct DrawLineData{
@@ -58,15 +71,14 @@ namespace DevTools {
     }
 
     public class DevToolsService : MonoBehaviour {
-        static List<ChartGraph> ListGraph;
-        ChartGraph FPS;
         public static Material mat, mat2;
         public InputActionAsset inputActionsAssets;
+        public VisualTreeAsset visualTreeAsset;
+        public PanelSettings panelSettings;
         PlayerInput playerInput;
+        UIDocument uIDocument;
         public static Mesh Capsule, Sphere, Cube, Cylinder;
         void Awake(){
-            DevToolsRuntime.ListWindows.Clear();
-            DevToolsRuntime.ListGameObjects.Clear();
             DevToolsRuntime.ListLineData.Clear();
             DevToolsRuntime.ListTextData.Clear();
             DevToolsRuntime.ListSphereData.Clear();
@@ -74,31 +86,210 @@ namespace DevTools {
             DevToolsRuntime.ListCubeData.Clear();
             DevToolsRuntime.ListCylinderData.Clear();
             
-            ListGraph = new List<ChartGraph>();
             mat = new Material(Shader.Find("Hidden/Internal-Colored"));
-            mat2 = new Material(Shader.Find("Hidden/Internal-Colored"));
             DontDestroyOnLoad(gameObject);
-            FPS = CreateGraph(500, "FPS", new Rect(1, 17, 198, 50));
         }
 
         void Start(){
             playerInput = GetComponent<PlayerInput>();
             playerInput.actions = inputActionsAssets;
             playerInput.currentActionMap = inputActionsAssets.actionMaps[0];
+            uIDocument = GetComponent<UIDocument>();
+            uIDocument.visualTreeAsset = visualTreeAsset;
+            uIDocument.panelSettings = panelSettings;
+
+            uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = false;
+            uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = false;
+            uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
+            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
+
+            uIDocument.rootVisualElement.Q<Label>("title").text = $"{Application.productName} - {Application.companyName}";
+            uIDocument.rootVisualElement.Q<Label>("plataform").text = $"Platform: {Application.platform}";
+            uIDocument.rootVisualElement.Q<Label>("version").text = $"Version: {Application.version}";
+            uIDocument.rootVisualElement.Q<Label>("unityversion").text = $"Unity Version: {Application.unityVersion}";
+            uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowScenes){text = "Scenes"});
+            uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowGraphic){text = "Graphic"});
+            uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
+        }
+
+
+        void ShowGraphic(){
+            DevToolsRuntime.SelectedObject = gameObject;
+
+            var root = uIDocument.rootVisualElement.Q<ScrollView>("Components");
+            root.Clear();
+
+            string[] names = QualitySettings.names;
+            root.Add(new Label(){text = "Quality: " + (name.Length > 0 ? names[QualitySettings.GetQualityLevel()] : "None")});
+
+            for(int i = 0; i < names.Length; i++){
+                int index = i;
+                root.Add(new Button(()=>{
+                    QualitySettings.SetQualityLevel(index, true);
+                    ShowGraphic();
+                }){text = names[i]});
+            }
+
+
+            root.Add(new SliderInt(){name = "TargetFrameRate", label = "FrameRate: " + Application.targetFrameRate, lowValue = -1, highValue = 500, value = Application.targetFrameRate});
+            root.Q<SliderInt>("TargetFrameRate").RegisterCallback<ChangeEvent<int>>((evt) => {Application.targetFrameRate = evt.newValue; ((SliderInt)evt.currentTarget).label = $"FrameRate: {Application.targetFrameRate}";});
+            
+            
+            root.Add(new SliderInt(){name = "vSyncCount", label = "VSync: " + QualitySettings.vSyncCount, lowValue = 0, highValue = 4, value = QualitySettings.vSyncCount});
+            root.Q<SliderInt>("vSyncCount").RegisterCallback<ChangeEvent<int>>((evt) => {QualitySettings.vSyncCount = evt.newValue; ((SliderInt)evt.currentTarget).label = $"vSyncCount: {QualitySettings.vSyncCount}";});
+           
+           
+            root.Add(new SliderInt(){name = "antiAliasing", label = "AntiAliasing: " + QualitySettings.antiAliasing, lowValue = 0, highValue = 4, value = QualitySettings.antiAliasing,});
+            root.Q<SliderInt>("antiAliasing").RegisterCallback<ChangeEvent<int>>((evt) => {QualitySettings.antiAliasing = evt.newValue; ((SliderInt)evt.currentTarget).label = $"AntiAliasing: {QualitySettings.antiAliasing}";});
+        
+        
+            root.Add(new EnumField("AnisotropicFiltering:", QualitySettings.anisotropicFiltering){name = "anisotropicFiltering"});
+            root.Q<EnumField>("anisotropicFiltering").RegisterCallback<ChangeEvent<int>>((evt) => {QualitySettings.anisotropicFiltering = (AnisotropicFiltering)evt.newValue; ((EnumField)evt.currentTarget).label = $"AnisotropicFiltering: {QualitySettings.anisotropicFiltering}";});
+        
+
+            root.Add(new Toggle(){name = "enableLODCrossFade", text = "EnableLODCrossFade: ", value = QualitySettings.enableLODCrossFade});
+            root.Q<Toggle>("enableLODCrossFade").RegisterCallback<ChangeEvent<bool>>((evt) => {QualitySettings.enableLODCrossFade = evt.newValue;});
+        
+            
+            root.Add(new Slider(){name = "LodBias", label = "LodBias: " + QualitySettings.lodBias, lowValue = 0f, highValue = 2f, value = QualitySettings.lodBias});
+            root.Q<Slider>("LodBias").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.lodBias = evt.newValue; ((Slider)evt.currentTarget).label = "LodBias: " + QualitySettings.lodBias;});
+
+
+            root.Add(new SliderInt(){name = "maximumLODLevel", label = "MaximumLODLevel: " + QualitySettings.maximumLODLevel, lowValue = 0, highValue = 20, value = QualitySettings.maximumLODLevel,});
+            root.Q<SliderInt>("maximumLODLevel").RegisterCallback<ChangeEvent<int>>((evt) => {QualitySettings.maximumLODLevel = evt.newValue; ((SliderInt)evt.currentTarget).label = $"MaximumLODLevel: {QualitySettings.maximumLODLevel}";});
+        
+            root.Add(new Slider(){name = "Shadow", label = "Shadow: " + QualitySettings.shadows, lowValue = 0f, highValue = 2f, value = (float)QualitySettings.shadows});
+            root.Q<Slider>("Shadow").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.shadows = (ShadowQuality)evt.newValue; ((Slider)evt.currentTarget).label = "Shadow: " + QualitySettings.shadows;});
+
+
+            root.Add(new Slider(){name = "ShadowDistance", label = "ShadowDistance: " + QualitySettings.shadowDistance, lowValue = 0f, highValue = 200f, value = (float)QualitySettings.shadowDistance});
+            root.Q<Slider>("ShadowDistance").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.shadowDistance = evt.newValue; ((Slider)evt.currentTarget).label = "ShadowDistance: " + QualitySettings.shadowDistance;});
+
+            root.Add(new Slider(){name = "ShadowResolution", label = "ShadowResolution: " + QualitySettings.shadowResolution, lowValue = 0f, highValue = 3f, value = (float)QualitySettings.shadowResolution});
+            root.Q<Slider>("ShadowResolution").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.shadowResolution = (ShadowResolution)evt.newValue; ((Slider)evt.currentTarget).label = "ShadowResolution: " + QualitySettings.shadowResolution;});
+
+            root.Add(new Toggle(){name = "SoftParticles", text = "SoftParticles: ", value = QualitySettings.softParticles});
+            root.Q<Toggle>("SoftParticles").RegisterCallback<ChangeEvent<bool>>((evt) => {QualitySettings.softParticles = evt.newValue;});
+        
+            root.Add(new Toggle(){name = "SoftVegetation", text = "SoftVegetation: ", value = QualitySettings.softVegetation});
+            root.Q<Toggle>("SoftVegetation").RegisterCallback<ChangeEvent<bool>>((evt) => {QualitySettings.softVegetation = evt.newValue;});
+     
+            root.Add(new Slider(){name = "TerrainDetailDensityScale", label = "TerrainDetailDensityScale: " + QualitySettings.terrainDetailDensityScale, lowValue = 0f, highValue = 5000f, value = QualitySettings.terrainDetailDensityScale});
+            root.Q<Slider>("TerrainDetailDensityScale").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.terrainDetailDensityScale = evt.newValue; ((Slider)evt.currentTarget).label = "TerrainDetailDensityScale: " + QualitySettings.terrainDetailDensityScale;});
+
+            root.Add(new Slider(){name = "TerrainDetailDistance", label = "TerrainDetailDistance: " + QualitySettings.terrainDetailDistance, lowValue = 0f, highValue = 5000f, value = QualitySettings.terrainDetailDistance});
+            root.Q<Slider>("TerrainDetailDistance").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.terrainDetailDistance = evt.newValue; ((Slider)evt.currentTarget).label = "TerrainDetailDistance: " + QualitySettings.terrainDetailDistance;});
+
+            root.Add(new Slider(){name = "TerrainTreeDistance", label = "TerrainTreeDistance: " + QualitySettings.terrainTreeDistance, lowValue = 0f, highValue = 5000f, value = QualitySettings.terrainTreeDistance});
+            root.Q<Slider>("TerrainTreeDistance").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.terrainTreeDistance = evt.newValue; ((Slider)evt.currentTarget).label = "TerrainTreeDistance: " + QualitySettings.terrainTreeDistance;});
+
+            root.Add(new Slider(){name = "TerrainMaxTrees", label = "TerrainMaxTrees: " + QualitySettings.terrainMaxTrees, lowValue = 0f, highValue = 50000f, value = QualitySettings.terrainMaxTrees});
+            root.Q<Slider>("TerrainMaxTrees").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.terrainMaxTrees = evt.newValue; ((Slider)evt.currentTarget).label = "TerrainMaxTrees: " + QualitySettings.terrainMaxTrees;});
+
+            root.visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+        }
+
+
+        void ShowScenes(){
+            DevToolsRuntime.SelectedObject = gameObject;
+
+            var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
+            components.Clear();
+
+            var regex = new System.Text.RegularExpressions.Regex(@"([^/]*/)*([\w\d\-]*)\.unity");
+            for(int i = 0; i < SceneManager.sceneCountInBuildSettings; i++){
+                int index = i;
+                components.Add(new Button(()=>{
+                    SceneManager.LoadScene(index);
+                    ShowScenes();
+                }){text = regex.Replace(SceneUtility.GetScenePathByBuildIndex(i), "$2")});
+            }
+
+
+            components.visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+        }
+
+        void ShowResolutions(){
+            DevToolsRuntime.SelectedObject = gameObject;
+
+            var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
+            components.Clear();
+
+            components.Add(new Label(){text = "Resolution: " + Screen.width + "x" + Screen.height});
+
+            Resolution[] resolutions = Screen.resolutions;
+            for(int i = 0; i < resolutions.Length; i++){
+                int index = i;
+                components.Add(new Button(()=>{
+                    Screen.SetResolution(resolutions[index].width, resolutions[index].height, Screen.fullScreenMode);
+                    ShowResolutions();
+                }){text = resolutions[i].width + "x" + resolutions[i].height});
+            }
+
+            components.visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+
+        }
+
+        void ShowComponents(){
+            var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
+            components.Clear();
+            if(DevToolsRuntime.ListGameObjects.First(item => item.gameObject == DevToolsRuntime.SelectedObject) is var itemObject)
+            foreach(var itemComponent in itemObject.Components){
+                // check button exite and add or remove
+                components.Add(new Button(()=>{
+                    DevToolsRuntime.CurrentComponent = itemComponent;
+                    ShowInspector(itemComponent);
+                }){text = itemComponent.name});
+            }
+
+            components.visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+        }
+
+        void ShowInspector(DevToolsComponent devToolsComponent){
+            uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = true;
+            DevToolsRuntime.isOpenInspector = true;
+            var root = uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent");
+            root.Clear();
+            root.Add(devToolsComponent.templateContainer);
         }
 
         void FixedUpdate(){
+            if(totalReservedMemoryRecorder.Valid)
+                uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
+
+            if(totalReservedMemoryRecorder.Valid)
+                uIDocument.rootVisualElement.Q<Label>("memory").text = $"Total Reserved Memory: {BytesToString(totalReservedMemoryRecorder.LastValue)}";
+
+            if(gcReservedMemoryRecorder.Valid)
+                uIDocument.rootVisualElement.Q<Label>("memorygc").text = $"GC Reserved Memory: {BytesToString(gcReservedMemoryRecorder.LastValue)}";
+
+            if(gcReservedMemoryRecorder.Valid)
+                uIDocument.rootVisualElement.Q<Label>("memorysystem").text = $"System Used Memory: {BytesToString(systemUsedMemoryRecorder.LastValue)}";
+
+
+
+            var listObjects = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
+
+            // update ListObjects registed, usage For loop because conflit in changed scene
             for(int i = 0; i < DevToolsRuntime.ListGameObjects.Count; i++){
-                if(!DevToolsRuntime.ListGameObjects.ElementAt(i).Value){
-                    DevToolsRuntime.ListWindows.Remove(DevToolsRuntime.ListGameObjects.ElementAt(i).Key);
-                    DevToolsRuntime.ListGameObjects.Remove(DevToolsRuntime.ListGameObjects.ElementAt(i).Key);
+                var itemObject = DevToolsRuntime.ListGameObjects[i];
+                 if(!itemObject.gameObject){
+                    listObjects.Remove(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()));
+                    DevToolsRuntime.ListGameObjects.Remove(itemObject);
+                }else{
+                    if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
+                            listObjects.Add(new Button(()=>{DevToolsRuntime.SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.gameObject.name});
+                        }else
+                            if(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()) is var button)
+                                button.text = itemObject.gameObject.name;
                 }
             }
         }
 
-        float tmp, count;
-
-        string statsText;
         ProfilerRecorder totalReservedMemoryRecorder;
         ProfilerRecorder gcReservedMemoryRecorder;
         ProfilerRecorder systemUsedMemoryRecorder;
@@ -117,61 +308,62 @@ namespace DevTools {
         }
 
 
-        bool isOverlaysTmp = false;
+        bool isOverlaysTmp = false, isInspectorTmp = false;
         CursorLockMode cursorLockMode;
+        int fps, fpsCount;
+        float fpsTimerCount, fpsTimerTmp, timerFps;
         void Update(){
             // Renders
             DrawSpheres();
             DrawCubes();
             DrawCapsules();
             DrawCylinders();
-            
-            var sb = new StringBuilder(500);
-            sb.AppendLine($"Platform: {Application.platform}");
-            if (totalReservedMemoryRecorder.Valid)
-                sb.AppendLine($"Total Reserved Memory: {BytesToString(totalReservedMemoryRecorder.LastValue)}");
-            if (gcReservedMemoryRecorder.Valid)
-                sb.AppendLine($"GC Reserved Memory: {BytesToString(gcReservedMemoryRecorder.LastValue)}");
-            if (systemUsedMemoryRecorder.Valid)
-                sb.AppendLine($"System Used Memory: {BytesToString(systemUsedMemoryRecorder.LastValue)}");
 
-            statsText = sb.ToString();
+            fpsTimerCount = Time.time - fpsTimerTmp;
+            fpsTimerTmp = Time.time;
+            
+            if(timerFps < Time.time){
+                timerFps = Time.time + 0.5f;
+                fps = fpsCount * 2;
+                fpsCount = 0;
+                fpsTimerCount = Time.time - fpsTimerTmp;
+            }else
+                fpsCount++;
+
 
             if(playerInput.currentActionMap.FindAction("DevTools").triggered){
-                DevToolsRuntime.isOpenDevTools = !DevToolsRuntime.isOpenDevTools;
+                uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
+                DevToolsRuntime.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
+
                 if(DevToolsRuntime.isOpenDevTools){
-                    cursorLockMode = Cursor.lockState;
+                    cursorLockMode = UnityEngine.Cursor.lockState;
                     isOverlaysTmp = DevToolsRuntime.isOverlays;
                     DevToolsRuntime.isOverlays = true;
+                    isInspectorTmp = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
                 }else{
-                    Cursor.lockState = cursorLockMode;
+                    UnityEngine.Cursor.lockState = cursorLockMode;
                     DevToolsRuntime.isOverlays = isOverlaysTmp;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = isInspectorTmp;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
+                    uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
+                    uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
                 }
                 DevToolsRuntime.SelectedObject = null;
             }
 
-            if(playerInput.currentActionMap.FindAction("Inspector").triggered)
-                DevToolsRuntime.isOpenDeveloperTools = !DevToolsRuntime.isOpenDeveloperTools;
+            if(playerInput.currentActionMap.FindAction("Inspector").triggered){
+                uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = !uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
+                DevToolsRuntime.isOpenInspector = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
+            }
 
             if(playerInput.currentActionMap.FindAction("Overlays").triggered)
                 DevToolsRuntime.isOverlays = !DevToolsRuntime.isOverlays;
 
             if(DevToolsRuntime.isOpenDevTools)
-                Cursor.lockState = CursorLockMode.None;
-
-            if(tmp + 1 < Time.time){ 
-                tmp = Time.time;
-                AddValueGraph(count, FPS);
-                count = 0;
-            }
-            count++;
+                UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
 
-
-        Vector2 SizeComponents = new(250, 0);
-        Vector2 PaddingScreen = new(10, 10);
-        Vector2 SizePerformance = new(200, 70);
-        Vector2 SizeManager = new(200, 112);
 
         static GUIStyle style = new GUIStyle();
         void DrawText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){
@@ -180,40 +372,25 @@ namespace DevTools {
             style.normal.textColor = color;
             style.normal.background = texture2D;
             style.alignment = TextAnchor.MiddleCenter;
-            if(position.z > 0)
+
+            if(position.z > 0)  // Hide label off border camera
                 GUI.Label(new Rect(position.x - (textSize.x + 10) / 2 + positionOff.x, Screen.height - position.y +  positionOff.y, textSize.x + 10, textSize.y), text, style);
         }
 
         void OnGUI(){
             if(Debug.isDebugBuild){
-                   
                 // Draw text objects
                 if(DevToolsRuntime.isOverlays)
-                foreach(var item in DevToolsRuntime.ListGameObjects.Values.Distinct().Where(item => item))
-                    DrawText(item.name, item.transform.position, Color.white, Texture2D.grayTexture);
+                foreach(var item in DevToolsRuntime.ListGameObjects)
+                    if(item.gameObject)
+                        DrawText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
                 
                 DrawText();
                 DrawLines();
 
-                GUI.backgroundColor = Color.black;
-                GUI.color = Color.white;
-                // Layout size
-                Vector2 SizeDevTools = new(200, Screen.height - (PaddingScreen.y * 4 + SizePerformance.y + SizeManager.y));
-                Vector2 SizeInspector = new(275, Screen.height - PaddingScreen.y * 2);
-
-                if(DevToolsRuntime.isOpenDevTools){
-                    GUI.Label(new Rect(SizePerformance.x + PaddingScreen.x * 2, PaddingScreen.y, 250, SizePerformance.y), statsText, new GUIStyle(GUI.skin.textArea){fontSize = 12, padding = new RectOffset(10, 0,5,0)});
-                    GUILayout.Window(0, new Rect(PaddingScreen.x, PaddingScreen.y, SizePerformance.x, SizePerformance.y), DevToolsWindow, "Performance");
-                    GUILayout.Window(1, new Rect(PaddingScreen.x, PaddingScreen.y * 2 + SizePerformance.y, SizeManager.x, SizeManager.y), DevToolsWindow, "Manager");
-                    GUILayout.Window(2, new Rect(PaddingScreen.x, PaddingScreen.y * 3 + SizePerformance.y + SizeManager.y, SizeDevTools.x, SizeDevTools.y), DevToolsWindow, "DevTools");
-                    if(DevToolsRuntime.SelectedObject)
-                        GUILayout.Window(3, new Rect(SizePerformance.x + PaddingScreen.x * 2,  PaddingScreen.y * 2 + SizePerformance.y, SizeComponents.x, SizeComponents.y), DevToolsWindow, DevToolsRuntime.SelectedObject.name == gameObject.name ? currentList.ToString() : DevToolsRuntime.SelectedObject.name);
-                }else{
-                    GUILayout.Label("  Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentWindow.Equals(new KeyValuePair<string, GUI.WindowFunction>()) ? "\n  Press F2 to open/close current Developer Tools." : "") + "\n  Press F3 to show/hide Overlays.");
+                if(!DevToolsRuntime.isOpenDevTools){
+                    GUILayout.Label("  Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\n  Press " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\n  Press " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString() + " to show/hide Overlays.");
                 }
-                if(DevToolsRuntime.isOpenDeveloperTools)
-                if(!DevToolsRuntime.CurrentWindow.Equals(new KeyValuePair<string, GUI.WindowFunction>()))
-                    GUILayout.Window(4, new Rect(Screen.width - SizeInspector.x - PaddingScreen.x, PaddingScreen.y, SizeInspector.x, SizeInspector.y), DevToolsRuntime.CurrentWindow.Value, DevToolsRuntime.CurrentWindow.Key);
             }
         }
 
@@ -303,255 +480,6 @@ namespace DevTools {
 
                 if(textData.timer < Time.time)
                     DevToolsRuntime.ListTextData.RemoveAt(i);
-            }
-        }
-
-        Vector2 scrollPosition = Vector2.zero;
-        Vector2 scrollPosition2 = Vector2.zero;
-        Vector2 scrollPosition3 = Vector2.zero;
-        enum typeList {Components, Scenes, Graphic, Resolution}
-        typeList currentList = typeList.Components;
-        void DevToolsWindow(int id){
-            GUILayout.Space(0);
-            switch(id){
-                case 0: //Performance
-                    for(int i = 0; i < ListGraph.Count; i++)
-                        ShowGraph(ListGraph[i]);
-                break;
-                case 1: // Manager
-                    scrollPosition2 = GUILayout.BeginScrollView(scrollPosition2);
-                    if(GUILayout.Button("Scenes")){
-                        currentList = typeList.Scenes;
-                        DevToolsRuntime.SelectedObject = gameObject;
-                    }
-                    if(GUILayout.Button("Graphic")){
-                        currentList = typeList.Graphic;
-                        DevToolsRuntime.SelectedObject = gameObject;
-                    }
-                    if(GUILayout.Button("Resolution")){
-                        currentList = typeList.Resolution;
-                        DevToolsRuntime.SelectedObject = gameObject;
-                    }
-                    GUILayout.EndScrollView();
-                break;
-                case 2: //DevTools
-                    scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-                    foreach(var item in DevToolsRuntime.ListGameObjects.Values.Distinct().Where(item => item))
-                        if(GUILayout.Button(item.name)){
-                            currentList = typeList.Components;
-                            DevToolsRuntime.SelectedObject = item;
-                        }
-                    GUILayout.EndScrollView();
-                break;
-                case 3: //Component
-                    Draw();
-                break;
-            }       
-        }
-
-        void Draw(){
-            int quantity = 0;
-            switch(currentList){
-                case typeList.Components:
-                    quantity = DevToolsRuntime.ListGameObjects.Where(item => item.Value == DevToolsRuntime.SelectedObject).Count();
-                break;
-                case typeList.Scenes:
-                    quantity = SceneManager.sceneCountInBuildSettings;
-                break;
-                case typeList.Graphic:
-                    quantity = QualitySettings.names.Length + 30;
-                break;
-                case typeList.Resolution:
-                    quantity = Screen.resolutions.Length;
-                break;
-            }
-
-            if(quantity == 0){
-                DevToolsRuntime.SelectedObject = null;
-                return;
-            }
-
-            if((quantity * 26) >= Screen.height - (PaddingScreen.y * 5 + SizePerformance.y)){
-                SizeComponents.y = Screen.height - (PaddingScreen.y * 3 + SizePerformance.y);
-                scrollPosition3 = GUILayout.BeginScrollView(scrollPosition3);
-            }else{
-                SizeComponents.y = 0;
-                GUILayout.BeginVertical();
-            }
-
-            switch(currentList){
-                case typeList.Components:
-                    var Components = DevToolsRuntime.ListGameObjects.Where(item => item.Value == DevToolsRuntime.SelectedObject);
-                    foreach(var item in Components.Where(item => item.Value))
-                        if(GUILayout.Button(item.Key)){
-                            var value = DevToolsRuntime.ListWindows.First(item2 => item2.Key == item.Key);
-                            if(value.Value != null){
-                                DevToolsRuntime.isOpenDeveloperTools = true;
-                                DevToolsRuntime.CurrentWindow = DevToolsRuntime.ListWindows.First(item2 => item2.Key == item.Key);
-                            }
-                        }
-                break;
-                case typeList.Scenes:
-                    var regex = new System.Text.RegularExpressions.Regex(@"([^/]*/)*([\w\d\-]*)\.unity");
-                    for(int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
-                        if(GUILayout.Button(regex.Replace(SceneUtility.GetScenePathByBuildIndex(i), "$2"))){
-                            DevToolsRuntime.CurrentWindow = new KeyValuePair<string, GUI.WindowFunction>();
-                            SceneManager.LoadScene(i);
-                        }
-                break;
-                case typeList.Graphic:
-                    string[] names = QualitySettings.names;
-                    if(name.Length > 0)
-                        GUILayout.Label("Quality: " + names[QualitySettings.GetQualityLevel()]); // 1
-                    for(int i = 0; i < names.Length; i++)
-                        if(GUILayout.Button(names[i]))
-                            QualitySettings.SetQualityLevel(i, true);
-
-                    GUILayout.Label("FrameRate: " + Application.targetFrameRate); // 2
-                    Application.targetFrameRate = (int)GUILayout.HorizontalSlider(Application.targetFrameRate, -1, 500); // 3
-
-                    GUILayout.Label("VSync: " + QualitySettings.vSyncCount); // 4
-                    QualitySettings.vSyncCount = (int)GUILayout.HorizontalSlider(QualitySettings.vSyncCount, 0, 4); // 5
-
-                    GUILayout.Label("AntiAliasing: " + QualitySettings.antiAliasing); // 6
-                    QualitySettings.antiAliasing = (int)GUILayout.HorizontalSlider(QualitySettings.antiAliasing, 0, 4); // 7
-
-                    GUILayout.Label("AnisotropicFiltering: " + QualitySettings.anisotropicFiltering); // 8
-                    QualitySettings.anisotropicFiltering = (AnisotropicFiltering)GUILayout.HorizontalSlider((float)QualitySettings.anisotropicFiltering, 0, 2); // 9
-
-                    QualitySettings.enableLODCrossFade = GUILayout.Toggle(QualitySettings.enableLODCrossFade, "EnableLODCrossFade"); // 10
-
-                    GUILayout.Label("LodBias: " + QualitySettings.lodBias); // 11
-                    QualitySettings.lodBias = GUILayout.HorizontalSlider(QualitySettings.lodBias, 0, 2f); // 12
-
-                    GUILayout.Label("MaximumLODLevel: " + QualitySettings.maximumLODLevel); // 13
-                    QualitySettings.maximumLODLevel = (int)GUILayout.HorizontalSlider(QualitySettings.maximumLODLevel, 0, 20); // 14
-
-                    GUILayout.Label("Shadow: " + QualitySettings.shadows); // 15
-                    QualitySettings.shadows = (ShadowQuality)GUILayout.HorizontalSlider((float)QualitySettings.shadows, 0, 2); // 16
-
-                    GUILayout.Label("ShadowDistance: " + QualitySettings.shadowDistance); // 17
-                    QualitySettings.shadowDistance = (int)GUILayout.HorizontalSlider(QualitySettings.shadowDistance, 0, 200); // 18
-
-                    GUILayout.Label("ShadowResolution: " + QualitySettings.shadowResolution); // 19
-                    QualitySettings.shadowResolution = (ShadowResolution)GUILayout.HorizontalSlider((float)QualitySettings.shadowResolution, 0, 3); // 20
-
-                    QualitySettings.softParticles = GUILayout.Toggle(QualitySettings.softParticles, "SoftParticles"); // 21
-
-                    QualitySettings.softVegetation = GUILayout.Toggle(QualitySettings.softVegetation, "SoftVegetation"); // 22
-
-                    GUILayout.Label("TerrainDetailDensityScale: " + QualitySettings.terrainDetailDensityScale); // 23
-                    QualitySettings.terrainDetailDensityScale = GUILayout.HorizontalSlider(QualitySettings.terrainDetailDensityScale, 0, 5000); // 24
-
-                    GUILayout.Label("TerrainDetailDistance: " + QualitySettings.terrainDetailDistance); // 25
-                    QualitySettings.terrainDetailDistance = GUILayout.HorizontalSlider(QualitySettings.terrainDetailDistance, 0, 5000); // 26
-
-                    GUILayout.Label("TerrainTreeDistance: " + QualitySettings.terrainTreeDistance); // 27
-                    QualitySettings.terrainTreeDistance = GUILayout.HorizontalSlider(QualitySettings.terrainTreeDistance, 0, 5000); // 28
-
-                    GUILayout.Label("TerrainMaxTrees: " + QualitySettings.terrainMaxTrees); // 29
-                    QualitySettings.terrainMaxTrees = GUILayout.HorizontalSlider(QualitySettings.terrainMaxTrees, 0, 50000); // 30
-                break;
-                case typeList.Resolution:
-                    Resolution[] resolutions = Screen.resolutions;
-                    for(int i = 0; i < resolutions.Length; i++)
-                        if(GUILayout.Button(resolutions[i].width + "x" + resolutions[i].height))
-                            Screen.SetResolution(resolutions[i].width, resolutions[i].height, Screen.fullScreenMode);
-                break;
-            }
-
-            if((quantity * 26) >= Screen.height - (PaddingScreen.y * 5 + SizePerformance.y))
-                GUILayout.EndScrollView();
-            else
-                GUILayout.EndVertical();
-        }
-
-        class ChartGraph {
-            public Rect windowRect;
-            public string Name;
-            public float value;
-            public float maxValue;
-            public List<float> values = new();
-        }
-        
-        void AddValueGraph(float value, ChartGraph graph){
-            graph.value = value;
-            float b = graph.windowRect.height / graph.maxValue;
-            value = b*value;
-            if(value > graph.windowRect.height)
-                value = graph.windowRect.height;
-            if(value < 0)
-                value = 0;
-            graph.values.Add(value);
-        }
-
-        ChartGraph CreateGraph(int maxValue, string name, Rect windowRect){
-            ChartGraph graph = new(){
-                windowRect = windowRect,
-                maxValue = maxValue,
-                Name = name
-            };
-            ListGraph.Add(graph);
-            return graph;
-        }
-
-        void ShowGraph(ChartGraph graph){
-            if(graph.values.Count > 0 && Event.current.type == EventType.Repaint){
-                while(graph.windowRect.width < graph.values.Count)
-                    graph.values.RemoveAt(0);
-
-                GL.PushMatrix();
-                GL.Clear(true, false, Color.black);
-                mat.color = Color.white;
-                mat.SetPass(0);
-
-                GL.Begin(GL.LINES);
-                GL.Color(new Color(1f,1f,1f,0.1f));
-                for(int i = 1; i < 3; i++){
-                    var xs = graph.windowRect.height / 3;
-                    GL.Vertex3(graph.windowRect.x, graph.windowRect.y + xs * i, 0);
-                    GL.Vertex3(graph.windowRect.x + graph.windowRect.width, graph.windowRect.y + xs * i, 0);
-                }
-                for(int i = 1; i < 4; i++){
-                    var xs = graph.windowRect.width / 4;
-                    GL.Vertex3(graph.windowRect.x + xs * i, graph.windowRect.y, 0);
-                    GL.Vertex3(graph.windowRect.x + xs * i, graph.windowRect.y + graph.windowRect.height, 0);
-                }
-                GL.End();
-
-                GL.Begin(GL.QUADS);
-                GL.Color(new Color(0.0f, 0.0f, 0.0f,0.0f));
-                GL.Vertex3(graph.windowRect.x, graph.windowRect.y, 0);
-                GL.Vertex3(graph.windowRect.width + graph.windowRect.x, graph.windowRect.y, 0);
-                GL.Vertex3(graph.windowRect.width + graph.windowRect.x, graph.windowRect.height + graph.windowRect.y, 0);
-                GL.Vertex3(graph.windowRect.x, graph.windowRect.height + graph.windowRect.y, 0);
-                GL.End();
-
-                GL.Begin(GL.LINES);
-                GL.Color(new Color(1f,1f,1f,1f));
-
-
-                float max = graph.values.Max() + 1;
-                float min = graph.values.Min();
-
-                for(int i = 0; i < graph.values.Count; i++){
-                    if(i > 1){
-                        float y2 = Mathf.InverseLerp(max, min, graph.values[i]) * graph.windowRect.height + graph.windowRect.y;
-                        float y1 = Mathf.InverseLerp(max, min, graph.values[i - 1]) * graph.windowRect.height + graph.windowRect.y;
-                        GL.Vertex3(i + graph.windowRect.x, y2, 0);
-                        GL.Vertex3(i - 1 + graph.windowRect.x, y1, 0);
-                    }
-                }
-
-                GL.End();
-                GL.PopMatrix();
-                var style = new GUIStyle
-                {
-                    alignment = TextAnchor.UpperRight,
-                    fontSize = 10
-                };
-                GUI.Label(new Rect(graph.windowRect.x,graph.windowRect.y,graph.windowRect.width,graph.windowRect.height),"<color=white>"+ graph.Name + ": " + graph.value + "</color>", style);
-           
             }
         }
 
