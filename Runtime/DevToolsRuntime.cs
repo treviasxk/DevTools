@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
+using static DevTools.DevToolsService;
 namespace DevTools {
     public class DevToolsRuntime {
         public static List<DevToolsData> ListGameObjects = new();
@@ -30,42 +31,41 @@ namespace DevTools {
             isOpenInspector = false;
             isOpenDevTools = false;
             isOverlays = false;
-            ListGameObjects.Clear();
             CurrentComponent = new DevToolsComponent();
             
             GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            DevToolsService.Capsule = obj.GetComponent<MeshFilter>().mesh;
+            Capsule = obj.GetComponent<MeshFilter>().mesh;
             Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            DevToolsService.Sphere = obj.GetComponent<MeshFilter>().mesh;
+            Sphere = obj.GetComponent<MeshFilter>().mesh;
             Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            DevToolsService.Cube = obj.GetComponent<MeshFilter>().mesh;
+            Cube = obj.GetComponent<MeshFilter>().mesh;
             Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            DevToolsService.Cylinder = obj.GetComponent<MeshFilter>().mesh;
+            Cylinder = obj.GetComponent<MeshFilter>().mesh;
             Object.Destroy(obj);
 
             GameObject service = new GameObject("[DevTools Service]");
             service.AddComponent<DevToolsService>();
             service.AddComponent<PlayerInput>();
             service.AddComponent<UIDocument>();
-            service.hideFlags = HideFlags.HideInHierarchy;
         }
-
 
         public static void Add(string name, GameObject gameObject, TemplateContainer templateContainer){
             if(!ListGameObjects.Any(item => item.gameObject == gameObject))
-                ListGameObjects.Add(new (){id = gameObject.GetHashCode(), gameObject = gameObject, Components = new(){{new DevToolsComponent(){id = gameObject.GetHashCode(), name = name, templateContainer = templateContainer}}}});
+                ListGameObjects.Add(new (){id = gameObject ? gameObject.GetHashCode() : -1, gameObject = gameObject, Components = new(){{new DevToolsComponent(){id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer}}}});
             else{
                 var itemObject = ListGameObjects.First(item => item.gameObject == gameObject);
-                itemObject.Components.Add(new (){id = gameObject.GetHashCode(), name = name, templateContainer = templateContainer});
+                itemObject.Components.Add(new (){id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer});
             }
             return;
         }
+
+        public static void Add(string name, TemplateContainer templateContainer) => Add(name, null, templateContainer);
 
         public static void DrawLine(Vector3 from, Vector3 to, Color color, float timer = 0){
             ListLineData.Add(new DrawLineData{from = from, to = to, color = color, timer = Time.time + timer});

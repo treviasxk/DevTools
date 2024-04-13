@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 19101, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: DevTools
   m_EditorClassIdentifier: 
-  themeUss: {fileID: -4733365628477956816, guid: 86ca046df9e8b4d47b6378f7aa179d59,
-    type: 3}
+  themeUss: {fileID: -4733365628477956816, guid: 8b8c27ea8b7ea7f48965e53a34e97bc7, type: 3}
   m_TargetTexture: {fileID: 0}
   m_RenderMode: 0
   m_WorldSpaceLayer: 0

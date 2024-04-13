@@ -34,8 +34,8 @@
                 <engine:EnumField label="Enum" type="UnityEngine.Accessibility.AccessibilityNotification, UnityEngine.AccessibilityModule" style="font-size: 8px; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(0, 0, 0);" />
                 <engine:Button text="Button" />
                 <engine:SliderInt label="SliderInt" value="42" high-value="100" />
-                <engine:SliderInt label="SliderInt" value="42" high-value="100" />
                 <engine:Button text="Button" />
+                <engine:SliderInt label="SliderInt" value="42" high-value="100" />
                 <engine:Toggle label="Toggle" />
             </engine:ScrollView>
         </engine:VisualElement>
@@ -56,6 +56,10 @@
                 <engine:Button text="Button" />
                 <engine:Button text="Button" />
             </engine:Foldout>
+            <engine:EnumField value="Center" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" />
         </engine:ScrollView>
+    </engine:VisualElement>
+    <engine:VisualElement name="Overlay" style="flex-grow: 1; position: absolute; width: auto; height: auto;">
+        <engine:Label name="Overlay-Label" />
     </engine:VisualElement>
 </engine:UXML>

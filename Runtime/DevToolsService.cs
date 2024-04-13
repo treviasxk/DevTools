@@ -8,69 +8,68 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace DevTools {
-
-    public struct DevToolsData {
-        public int id;
-        public GameObject gameObject;
-        public List<DevToolsComponent> Components;
-    }
-
-    public struct DevToolsComponent{
-        public int id;
-        public string name;
-        public TemplateContainer templateContainer;
-    }
-
-
-    public struct DrawLineData{
-        public Vector3 from, to;
-        public Color color;
-        public float timer;
-    }
-
-    public struct DrawTextData{
-        public string text;
-        public Vector3 position;
-        public Color color;
-        public Vector2 positionOff;
-        public Texture2D texture2D;
-        public float timer;
-    }
-
-    public struct DrawShpereData{
-        public Vector3 position;
-        public Color color;
-        public float radius;
-        public float timer;
-    }
-
-    public struct DrawCubeData{
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 scale;
-        public Color color;
-        public float timer;
-    }
-
-    public struct DrawCylinderData{
-        public Vector3 position;
-        public Quaternion rotation;
-        public Color color;
-        public float height;
-        public float radius;
-        public float timer;
-    }
-
-    public struct DrawCapsuleData{
-        public Vector3 position;
-        public Quaternion rotation;
-        public Color color;
-        public float height;
-        public float radius;
-        public float timer;
-    }
-
     public class DevToolsService : MonoBehaviour {
+        public struct DevToolsData {
+            public int id;
+            public GameObject gameObject;
+            public List<DevToolsComponent> Components;
+        }
+
+        public struct DevToolsComponent{
+            public int id;
+            public string name;
+            public TemplateContainer templateContainer;
+        }
+
+
+        public struct DrawLineData{
+            public Vector3 from, to;
+            public Color color;
+            public float timer;
+        }
+
+        public struct DrawTextData{
+            public string text;
+            public Vector3 position;
+            public Color color;
+            public Vector2 positionOff;
+            public Texture2D texture2D;
+            public float timer;
+        }
+
+        public struct DrawShpereData{
+            public Vector3 position;
+            public Color color;
+            public float radius;
+            public float timer;
+        }
+
+        public struct DrawCubeData{
+            public Vector3 position;
+            public Quaternion rotation;
+            public Vector3 scale;
+            public Color color;
+            public float timer;
+        }
+
+        public struct DrawCylinderData{
+            public Vector3 position;
+            public Quaternion rotation;
+            public Color color;
+            public float height;
+            public float radius;
+            public float timer;
+        }
+
+        public struct DrawCapsuleData{
+            public Vector3 position;
+            public Quaternion rotation;
+            public Color color;
+            public float height;
+            public float radius;
+            public float timer;
+        }
+
         public static Material mat, mat2;
         public InputActionAsset inputActionsAssets;
         public VisualTreeAsset visualTreeAsset;
@@ -78,6 +77,7 @@ namespace DevTools {
         PlayerInput playerInput;
         UIDocument uIDocument;
         public static Mesh Capsule, Sphere, Cube, Cylinder;
+        
         void Awake(){
             DevToolsRuntime.ListLineData.Clear();
             DevToolsRuntime.ListTextData.Clear();
@@ -85,9 +85,27 @@ namespace DevTools {
             DevToolsRuntime.ListCapsuleData.Clear();
             DevToolsRuntime.ListCubeData.Clear();
             DevToolsRuntime.ListCylinderData.Clear();
+            DevToolsRuntime.ListGameObjects.Clear();
+            SceneManager.sceneLoaded -= sceneLoaded;
+            SceneManager.sceneLoaded += sceneLoaded;
             
             mat = new Material(Shader.Find("Hidden/Internal-Colored"));
             DontDestroyOnLoad(gameObject);
+        }
+
+        private void sceneLoaded(Scene arg0, LoadSceneMode arg1){
+            var listObjects = DevToolsRuntime.ListGameObjects.Where(item => item.id == -1).ToArray();
+            if(uIDocument.rootVisualElement != null){
+                var root = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
+                for(int i = 0; i < listObjects.Length; i++){
+                    if(listObjects[i].id == -1){
+                        var itemObject = root.Q<Button>(listObjects[i].id.ToString());
+                        if(itemObject != null)
+                            root.Remove(itemObject);
+                        DevToolsRuntime.ListGameObjects.Remove(listObjects[i]);
+                    }
+                }
+            }
         }
 
         void Start(){
@@ -110,6 +128,8 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowScenes){text = "Scenes"});
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowGraphic){text = "Graphic"});
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
+            if(playerInput.currentActionMap != null)
+                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays.";
         }
 
 
@@ -258,34 +278,36 @@ namespace DevTools {
         }
 
         void FixedUpdate(){
-            if(totalReservedMemoryRecorder.Valid)
-                uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
+            if(uIDocument.rootVisualElement != null){
+                if(totalReservedMemoryRecorder.Valid)
+                    uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
 
-            if(totalReservedMemoryRecorder.Valid)
-                uIDocument.rootVisualElement.Q<Label>("memory").text = $"Total Reserved Memory: {BytesToString(totalReservedMemoryRecorder.LastValue)}";
+                if(totalReservedMemoryRecorder.Valid)
+                    uIDocument.rootVisualElement.Q<Label>("memory").text = $"Total Reserved Memory: {BytesToString(totalReservedMemoryRecorder.LastValue)}";
 
-            if(gcReservedMemoryRecorder.Valid)
-                uIDocument.rootVisualElement.Q<Label>("memorygc").text = $"GC Reserved Memory: {BytesToString(gcReservedMemoryRecorder.LastValue)}";
+                if(gcReservedMemoryRecorder.Valid)
+                    uIDocument.rootVisualElement.Q<Label>("memorygc").text = $"GC Reserved Memory: {BytesToString(gcReservedMemoryRecorder.LastValue)}";
 
-            if(gcReservedMemoryRecorder.Valid)
-                uIDocument.rootVisualElement.Q<Label>("memorysystem").text = $"System Used Memory: {BytesToString(systemUsedMemoryRecorder.LastValue)}";
+                if(gcReservedMemoryRecorder.Valid)
+                    uIDocument.rootVisualElement.Q<Label>("memorysystem").text = $"System Used Memory: {BytesToString(systemUsedMemoryRecorder.LastValue)}";
 
 
 
-            var listObjects = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
+                var listObjects = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
 
-            // update ListObjects registed, usage For loop because conflit in changed scene
-            for(int i = 0; i < DevToolsRuntime.ListGameObjects.Count; i++){
-                var itemObject = DevToolsRuntime.ListGameObjects[i];
-                 if(!itemObject.gameObject){
-                    listObjects.Remove(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()));
-                    DevToolsRuntime.ListGameObjects.Remove(itemObject);
-                }else{
-                    if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
-                            listObjects.Add(new Button(()=>{DevToolsRuntime.SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.gameObject.name});
+                // update ListObjects registed, usage For loop because conflit in changed scene
+                for(int i = 0; i < DevToolsRuntime.ListGameObjects.Count; i++){
+                    var itemObject = DevToolsRuntime.ListGameObjects[i];
+                    if(itemObject.id != -1 && !itemObject.gameObject){
+                        listObjects.Remove(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()));
+                        DevToolsRuntime.ListGameObjects.Remove(itemObject);
+                    }else{
+                        if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
+                            listObjects.Add(new Button(()=>{DevToolsRuntime.SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
                         }else
                             if(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()) is var button)
-                                button.text = itemObject.gameObject.name;
+                                button.text = itemObject.id != -1 ? itemObject.gameObject.name : "System";
+                    }
                 }
             }
         }
@@ -330,8 +352,7 @@ namespace DevTools {
             }else
                 fpsCount++;
 
-
-            if(playerInput.currentActionMap.FindAction("DevTools").triggered){
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("DevTools").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
                 DevToolsRuntime.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
 
@@ -341,6 +362,7 @@ namespace DevTools {
                     DevToolsRuntime.isOverlays = true;
                     isInspectorTmp = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
+                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
                     UnityEngine.Cursor.lockState = cursorLockMode;
                     DevToolsRuntime.isOverlays = isOverlaysTmp;
@@ -348,16 +370,17 @@ namespace DevTools {
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
                     uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
                     uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
+                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays.";
                 }
                 DevToolsRuntime.SelectedObject = null;
             }
 
-            if(playerInput.currentActionMap.FindAction("Inspector").triggered){
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Inspector").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = !uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
                 DevToolsRuntime.isOpenInspector = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
             }
 
-            if(playerInput.currentActionMap.FindAction("Overlays").triggered)
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Overlays").triggered)
                 DevToolsRuntime.isOverlays = !DevToolsRuntime.isOverlays;
 
             if(DevToolsRuntime.isOpenDevTools)
@@ -387,10 +410,6 @@ namespace DevTools {
                 
                 DrawText();
                 DrawLines();
-
-                if(!DevToolsRuntime.isOpenDevTools){
-                    GUILayout.Label("  Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\n  Press " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\n  Press " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString() + " to show/hide Overlays.");
-                }
             }
         }
 
