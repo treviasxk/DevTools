@@ -49,7 +49,7 @@ namespace DevTools {
             Cylinder = obj.GetComponent<MeshFilter>().mesh;
             Object.Destroy(obj);
 
-            GameObject service = new GameObject("[DevTools Service]");
+            GameObject service = new GameObject("[DevTools]");
             service.AddComponent<DevToolsService>();
             service.AddComponent<PlayerInput>();
             service.AddComponent<UIDocument>();

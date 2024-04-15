@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Profiling;
@@ -70,7 +69,7 @@ namespace DevTools {
             public float timer;
         }
 
-        public static Material mat, mat2;
+        public static Material mat;
         public InputActionAsset inputActionsAssets;
         public VisualTreeAsset visualTreeAsset;
         public PanelSettings panelSettings;
@@ -130,6 +129,9 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
             if(playerInput.currentActionMap != null)
                 uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays.";
+            uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent").Clear();
+            uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
+            uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();
         }
 
 
@@ -352,10 +354,12 @@ namespace DevTools {
             }else
                 fpsCount++;
 
+            
+
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("DevTools").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
                 DevToolsRuntime.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
-
+                
                 if(DevToolsRuntime.isOpenDevTools){
                     cursorLockMode = UnityEngine.Cursor.lockState;
                     isOverlaysTmp = DevToolsRuntime.isOverlays;
@@ -389,7 +393,7 @@ namespace DevTools {
 
 
         static GUIStyle style = new GUIStyle();
-        void DrawText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){
+        void RenderText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){
             var position = Camera.main.WorldToScreenPoint(target);
             var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
             style.normal.textColor = color;
@@ -406,7 +410,7 @@ namespace DevTools {
                 if(DevToolsRuntime.isOverlays)
                 foreach(var item in DevToolsRuntime.ListGameObjects)
                     if(item.gameObject)
-                        DrawText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
+                        RenderText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
                 
                 DrawText();
                 DrawLines();
@@ -419,8 +423,8 @@ namespace DevTools {
                 var shpereData = DevToolsRuntime.ListSphereData[i];
 
                 if(DevToolsRuntime.isOverlays){
-                    mat2.color = shpereData.color;
-                    Graphics.DrawMesh(Sphere, Matrix4x4.TRS(shpereData.position, Quaternion.identity, Vector3.one * shpereData.radius), mat2, 0);
+                    mat.color = shpereData.color;
+                    Graphics.DrawMesh(Sphere, Matrix4x4.TRS(shpereData.position, Quaternion.identity, Vector3.one * shpereData.radius), mat, 0);
                 }
 
                 if(shpereData.timer < Time.time)
@@ -495,7 +499,7 @@ namespace DevTools {
                 var textData = DevToolsRuntime.ListTextData[i];
 
                 if(DevToolsRuntime.isOverlays)
-                    DrawText(textData.text, textData.position, textData.color, textData.texture2D, textData.positionOff);
+                    RenderText(textData.text, textData.position, textData.color, textData.texture2D, textData.positionOff);
 
                 if(textData.timer < Time.time)
                     DevToolsRuntime.ListTextData.RemoveAt(i);
