@@ -281,8 +281,7 @@ namespace DevTools {
 
         void FixedUpdate(){
             if(uIDocument.rootVisualElement != null){
-                if(totalReservedMemoryRecorder.Valid)
-                    uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
+                uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
 
                 if(totalReservedMemoryRecorder.Valid)
                     uIDocument.rootVisualElement.Q<Label>("memory").text = $"Total Reserved Memory: {BytesToString(totalReservedMemoryRecorder.LastValue)}";
@@ -292,7 +291,6 @@ namespace DevTools {
 
                 if(gcReservedMemoryRecorder.Valid)
                     uIDocument.rootVisualElement.Q<Label>("memorysystem").text = $"System Used Memory: {BytesToString(systemUsedMemoryRecorder.LastValue)}";
-
 
 
                 var listObjects = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
@@ -314,23 +312,19 @@ namespace DevTools {
             }
         }
 
-        ProfilerRecorder totalReservedMemoryRecorder;
-        ProfilerRecorder gcReservedMemoryRecorder;
-        ProfilerRecorder systemUsedMemoryRecorder;
+        ProfilerRecorder totalReservedMemoryRecorder, gcReservedMemoryRecorder, systemUsedMemoryRecorder;
 
-
-        void OnEnable(){
+        void StartCount(){
             totalReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Reserved Memory");
             gcReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Reserved Memory");
             systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         }
 
-        void OnDisable(){
+        void StopCount(){
             totalReservedMemoryRecorder.Dispose();
             gcReservedMemoryRecorder.Dispose();
             systemUsedMemoryRecorder.Dispose();
         }
-
 
         bool isOverlaysTmp = false, isInspectorTmp = false;
         CursorLockMode cursorLockMode;
@@ -361,6 +355,7 @@ namespace DevTools {
                 DevToolsRuntime.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
                 
                 if(DevToolsRuntime.isOpenDevTools){
+                    StartCount();
                     cursorLockMode = UnityEngine.Cursor.lockState;
                     isOverlaysTmp = DevToolsRuntime.isOverlays;
                     DevToolsRuntime.isOverlays = true;
@@ -368,6 +363,7 @@ namespace DevTools {
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
+                    StopCount();
                     UnityEngine.Cursor.lockState = cursorLockMode;
                     DevToolsRuntime.isOverlays = isOverlaysTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = isInspectorTmp;

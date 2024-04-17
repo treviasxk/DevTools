@@ -16,7 +16,7 @@
 }
 
 #unity-tracker {
-    background-color: rgba(0, 0, 0, 0.78);
+    background-color: rgb(34, 34, 34);
     border-left-color: rgba(255, 0, 0, 0);
     border-right-color: rgba(255, 0, 0, 0);
     border-top-color: rgba(255, 0, 0, 0);

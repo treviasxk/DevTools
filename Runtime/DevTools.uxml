@@ -59,7 +59,7 @@
             </engine:Foldout>
         </engine:ScrollView>
     </engine:VisualElement>
-    <engine:VisualElement name="Overlay" style="flex-grow: 1; position: absolute; width: auto; height: auto;">
-        <engine:Label name="Overlay-Label" text="&#10;" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;" />
+    <engine:VisualElement name="Overlay" picking-mode="Ignore" style="flex-grow: 1; position: absolute; width: auto; height: auto;">
+        <engine:Label name="Overlay-Label" text="&#10;" picking-mode="Ignore" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;" />
     </engine:VisualElement>
 </engine:UXML>
