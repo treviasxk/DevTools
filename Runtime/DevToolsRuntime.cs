@@ -35,19 +35,19 @@ namespace DevTools {
             
             GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             Capsule = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
+            GameObject.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             Sphere = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
+            GameObject.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Cube = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
+            GameObject.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             Cylinder = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
+            GameObject.Destroy(obj);
 
             GameObject service = new GameObject("[DevTools]");
             service.AddComponent<DevToolsService>();

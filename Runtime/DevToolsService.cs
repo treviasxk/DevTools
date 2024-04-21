@@ -3,6 +3,7 @@ using System.Linq;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
@@ -121,7 +122,9 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
 
             uIDocument.rootVisualElement.Q<Label>("title").text = $"{Application.productName} - {Application.companyName}";
-            uIDocument.rootVisualElement.Q<Label>("plataform").text = $"Platform: {Application.platform}";
+            uIDocument.rootVisualElement.Q<Label>("api").text = $"API: {SystemInfo.graphicsDeviceType}";
+            uIDocument.rootVisualElement.Q<Label>("gpu").text = $"GPU: {SystemInfo.graphicsDeviceName}";
+            uIDocument.rootVisualElement.Q<Label>("platform").text = $"Platform: {Application.platform}";
             uIDocument.rootVisualElement.Q<Label>("version").text = $"Version: {Application.version}";
             uIDocument.rootVisualElement.Q<Label>("unityversion").text = $"Unity Version: {Application.unityVersion}";
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowScenes){text = "Scenes"});
