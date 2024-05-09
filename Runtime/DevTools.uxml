@@ -59,6 +59,9 @@
                 <engine:Button text="Button" />
                 <engine:Button text="Button" />
             </engine:Foldout>
+            <engine:TextField value="asdasdasd" style="background-color: rgba(0, 0, 0, 0);" />
+            <engine:DropdownField label="Dropdown" choices="asdasdas,asdasdas,asdasdas" />
+            <engine:EnumField label="Enum" value="Center" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" />
         </engine:ScrollView>
     </engine:VisualElement>
     <engine:VisualElement name="Overlay" picking-mode="Ignore" style="flex-grow: 1; position: absolute; width: auto; height: auto;">
