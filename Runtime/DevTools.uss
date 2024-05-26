@@ -279,3 +279,7 @@ DropdownField {
     padding-bottom: 0;
     align-items: stretch;
 }
+
+#Overlay .unity-label {
+    color: rgb(255, 255, 255);
+}

@@ -130,8 +130,9 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowScenes){text = "Scenes"});
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowGraphic){text = "Graphic"});
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
+            
             if(playerInput.currentActionMap != null)
-                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays.";
+                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString() + " to show/hide Overlays.";
             uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();

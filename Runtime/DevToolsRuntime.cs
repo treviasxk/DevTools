@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -21,12 +20,11 @@ namespace DevTools {
         public static bool isOverlays = false;
         
         #if UNITY_EDITOR && UBuild
-        [InitializeOnLoadMethod]
-        static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
+        DevToolsRuntime() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
         #endif
 
         [RuntimeInitializeOnLoadMethod]
-        static void InitRuntime(){
+        static void Init(){
             SelectedObject = null;
             isOpenInspector = false;
             isOpenDevTools = false;

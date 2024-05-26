@@ -18,7 +18,7 @@
                     "name": "Inspector",
                     "type": "Button",
                     "id": "df3a47d1-f314-4e04-8b61-4692beb98bd8",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -27,15 +27,6 @@
                     "name": "Overlays",
                     "type": "Button",
                     "id": "bc16fa7d-4ab6-43b4-8b32-c64921515cad",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "FullScreen",
-                    "type": "Button",
-                    "id": "8ecf9a5b-a862-4149-8c72-047b3b4b739f",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -73,17 +64,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Inspector",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "7d8f5e04-602d-4c51-9bb2-77350b57b1b6",
-                    "path": "<Keyboard>/f4",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "FullScreen",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
