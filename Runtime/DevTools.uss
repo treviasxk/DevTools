@@ -119,6 +119,8 @@
 .unity-toggle__input {
     -unity-background-image-tint-color: rgb(255, 255, 255);
     background-color: rgba(0, 0, 0, 0);
+    flex-direction: row;
+    flex-wrap: nowrap;
 }
 
 #unity-checkmark {
@@ -282,4 +284,36 @@ DropdownField {
 
 #Overlay .unity-label {
     color: rgb(255, 255, 255);
+}
+
+.unity-base-field {
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+.unity-popup-field__input {
+    background-color: rgb(0, 0, 0);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-left-color: rgb(87, 87, 87);
+    border-right-color: rgb(87, 87, 87);
+    border-top-color: rgb(87, 87, 87);
+    border-bottom-color: rgb(87, 87, 87);
+    font-size: 8px;
+    color: rgb(255, 255, 255);
+    -unity-background-image-tint-color: rgb(0, 0, 0);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    align-items: stretch;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+.unity-toggle {
+    flex-direction: row-reverse;
+    flex-wrap: wrap-reverse;
 }
