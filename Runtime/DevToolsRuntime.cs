@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -20,11 +21,23 @@ namespace DevTools {
         public static bool isOverlays = false;
         
         #if UNITY_EDITOR && UBuild
-        DevToolsRuntime() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
+        [InitializeOnLoadMethod]
+        static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
         #endif
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+        static void Clear(){
+            ListLineData.Clear();
+            ListTextData.Clear();
+            ListSphereData.Clear();
+            ListCapsuleData.Clear();
+            ListCubeData.Clear();
+            ListCylinderData.Clear();
+            ListGameObjects.Clear();
+        }
+
         [RuntimeInitializeOnLoadMethod]
-        static void Init(){
+        static void Start(){
             SelectedObject = null;
             isOpenInspector = false;
             isOpenDevTools = false;
@@ -33,19 +46,19 @@ namespace DevTools {
             
             GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             Capsule = obj.GetComponent<MeshFilter>().mesh;
-            GameObject.Destroy(obj);
+            Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             Sphere = obj.GetComponent<MeshFilter>().mesh;
-            GameObject.Destroy(obj);
+            Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Cube = obj.GetComponent<MeshFilter>().mesh;
-            GameObject.Destroy(obj);
+            Object.Destroy(obj);
 
             obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             Cylinder = obj.GetComponent<MeshFilter>().mesh;
-            GameObject.Destroy(obj);
+            Object.Destroy(obj);
 
             GameObject service = new GameObject("[DevTools]");
             service.AddComponent<DevToolsService>();

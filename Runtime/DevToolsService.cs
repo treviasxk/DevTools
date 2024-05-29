@@ -3,7 +3,6 @@ using System.Linq;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
@@ -79,13 +78,6 @@ namespace DevTools {
         public static Mesh Capsule, Sphere, Cube, Cylinder;
         
         void Awake(){
-            DevToolsRuntime.ListLineData.Clear();
-            DevToolsRuntime.ListTextData.Clear();
-            DevToolsRuntime.ListSphereData.Clear();
-            DevToolsRuntime.ListCapsuleData.Clear();
-            DevToolsRuntime.ListCubeData.Clear();
-            DevToolsRuntime.ListCylinderData.Clear();
-            DevToolsRuntime.ListGameObjects.Clear();
             SceneManager.sceneLoaded -= sceneLoaded;
             SceneManager.sceneLoaded += sceneLoaded;
             
