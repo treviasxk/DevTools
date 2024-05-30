@@ -50,12 +50,16 @@
         <engine:ScrollView name="InspectorContent" style="height: 100%; padding-top: 3px; padding-right: 3px; padding-bottom: 3px; padding-left: 3px; width: 100%; margin-bottom: 0; margin-top: 0; align-items: stretch; justify-content: flex-start; align-self: auto; align-content: center;">
             <engine:Button text="Button" />
             <engine:Foldout text="Foldout" enabled="true" focusable="false" toggle-on-label-click="true" value="true">
-                <engine:Vector3Field label="Vec3 Field" />
                 <engine:Button text="Button" />
             </engine:Foldout>
             <engine:TextField value="asdasdasd" style="background-color: rgba(0, 0, 0, 0);" />
             <engine:DropdownField label="Dropdown" choices="asdasdas,asdasdas,asdasdas" />
             <engine:EnumField label="Enum" value="Center" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" />
+            <engine:GroupBox text="Wind Direction">
+                <engine:Slider label="X : 1" value="42" high-value="100" />
+                <engine:Slider label="y" value="42" high-value="100" />
+                <engine:Slider label="z" value="42" high-value="100" />
+            </engine:GroupBox>
         </engine:ScrollView>
     </engine:VisualElement>
     <engine:VisualElement name="Overlay" picking-mode="Ignore" style="flex-grow: 1; position: absolute; width: auto; height: auto;">

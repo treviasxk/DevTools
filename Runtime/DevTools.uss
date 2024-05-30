@@ -317,3 +317,14 @@ DropdownField {
     flex-direction: row-reverse;
     flex-wrap: wrap-reverse;
 }
+
+GroupBox {
+    background-color: rgba(0, 0, 0, 0.19);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    padding-right: 5px;
+    padding-left: 5px;
+    -unity-font-style: bold;
+}
