@@ -20,13 +20,6 @@ namespace DevTools {
             public TemplateContainer templateContainer;
         }
 
-
-        public struct DrawLineData{
-            public Vector3 from, to;
-            public Color color;
-            public float timer;
-        }
-
         public struct DrawTextData{
             public string text;
             public Vector3 position;
@@ -36,52 +29,36 @@ namespace DevTools {
             public float timer;
         }
 
-        public struct DrawShpereData{
+        public struct DrawObjectData{
+            public ObjectType objectType;
             public Vector3 position;
+            public Vector3 position2;
             public Color color;
+            public float opacity;
             public float radius;
             public float timer;
-        }
-
-        public struct DrawCubeData{
-            public Vector3 position;
             public Quaternion rotation;
             public Vector3 scale;
-            public Color color;
-            public float timer;
-        }
-
-        public struct DrawCylinderData{
-            public Vector3 position;
-            public Quaternion rotation;
-            public Color color;
             public float height;
-            public float radius;
-            public float timer;
         }
 
-        public struct DrawCapsuleData{
-            public Vector3 position;
-            public Quaternion rotation;
-            public Color color;
-            public float height;
-            public float radius;
-            public float timer;
-        }
 
-        public static Material mat;
         public InputActionAsset inputActionsAssets;
         public VisualTreeAsset visualTreeAsset;
         public PanelSettings panelSettings;
         PlayerInput playerInput;
         UIDocument uIDocument;
+        RenderParams renderParams;
+        MaterialPropertyBlock materialPropertyBlock;
         public static Mesh Capsule, Sphere, Cube, Cylinder;
-        
+        public enum ObjectType {Capsule, Sphere, Cube, Cylinder, Line}
         void Awake(){
             SceneManager.sceneLoaded -= sceneLoaded;
             SceneManager.sceneLoaded += sceneLoaded;
-            
-            mat = new Material(Shader.Find("Hidden/Internal-Colored"));
+
+            materialPropertyBlock = new MaterialPropertyBlock();
+            renderParams = new RenderParams(new Material(Shader.Find("DevTools/Debug"))){matProps = materialPropertyBlock};
+            //mat.enableInstancing = true;
             DontDestroyOnLoad(gameObject);
         }
 
@@ -328,10 +305,7 @@ namespace DevTools {
         float fpsTimerCount, fpsTimerTmp, timerFps;
         void Update(){
             // Renders
-            DrawSpheres();
-            DrawCubes();
-            DrawCapsules();
-            DrawCylinders();
+            RenderObjects();
 
             fpsTimerCount = Time.time - fpsTimerTmp;
             fpsTimerTmp = Time.time;
@@ -404,87 +378,44 @@ namespace DevTools {
                     if(item.gameObject)
                         RenderText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
                 
+                // Renders
                 DrawText();
-                DrawLines();
             }
         }
 
-
-        void DrawSpheres(){
-            for(int i = 0; i < DevToolsRuntime.ListSphereData.Count; i++){
-                var shpereData = DevToolsRuntime.ListSphereData[i];
+        void RenderObjects(){
+            for(int i = 0; i < DevToolsRuntime.ListObjectsData.Count; i++){
+                var objectData = DevToolsRuntime.ListObjectsData[i];
 
                 if(DevToolsRuntime.isOverlays){
-                    mat.color = shpereData.color;
-                    Graphics.DrawMesh(Sphere, Matrix4x4.TRS(shpereData.position, Quaternion.identity, Vector3.one * shpereData.radius), mat, 0);
+                    objectData.color.a = Mathf.Clamp(objectData.opacity, 0f, 1f);
+                    materialPropertyBlock.SetColor("_Color", objectData.color);
+                    
+                    switch(objectData.objectType){
+                        case ObjectType.Sphere:
+                            Graphics.RenderMesh(renderParams, Sphere, 0, Matrix4x4.TRS(objectData.position, Quaternion.identity, Vector3.one * objectData.radius));
+                        break;
+                        case ObjectType.Cube:
+                            Graphics.RenderMesh(renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale));
+                        break;
+                        case ObjectType.Capsule:
+                            Graphics.RenderMesh(renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height));
+                        break;
+                        case ObjectType.Cylinder:
+                            Graphics.RenderMesh(renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height));
+                        break;
+                        case ObjectType.Line:
+                            Vector3 point = objectData.position - objectData.position2;
+                            float distance = Vector3.Distance(objectData.position, objectData.position2);
+                            Graphics.RenderMesh(renderParams, Cube, 0, Matrix4x4.TRS(objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(objectData.radius, objectData.radius, distance)));
+                        break;
+                    }
                 }
 
-                if(shpereData.timer < Time.time)
-                    DevToolsRuntime.ListSphereData.RemoveAt(i);
+                if(objectData.timer <= Time.time)
+                    DevToolsRuntime.ListObjectsData.RemoveAt(i);
             }
-        }
-
-        void DrawCubes(){
-            for(int i = 0; i < DevToolsRuntime.ListCubeData.Count; i++){
-                var cubeData = DevToolsRuntime.ListCubeData[i];
-
-                if(DevToolsRuntime.isOverlays){
-                    mat.color = cubeData.color;
-                    Graphics.DrawMesh(Cube, Matrix4x4.TRS(cubeData.position, cubeData.rotation, cubeData.scale), mat, 0);
-                }
-
-                if(cubeData.timer < Time.time)
-                    DevToolsRuntime.ListCubeData.RemoveAt(i);
-            } 
-        }
-
-        void DrawCapsules(){
-            for(int i = 0; i < DevToolsRuntime.ListCapsuleData.Count; i++){
-                var capsuleData = DevToolsRuntime.ListCapsuleData[i];
-
-                if(DevToolsRuntime.isOverlays){
-                    mat.color = capsuleData.color;
-                    Graphics.DrawMesh(Capsule, Matrix4x4.TRS(capsuleData.position, capsuleData.rotation, Vector3.one * capsuleData.radius + Vector3.up * capsuleData.height), mat, 0);
-                }
-
-                if(capsuleData.timer < Time.time)
-                    DevToolsRuntime.ListCapsuleData.RemoveAt(i);
-            }
-        }
-
-        void DrawCylinders(){
-            for(int i = 0; i < DevToolsRuntime.ListCylinderData.Count; i++){
-                var cylinderData = DevToolsRuntime.ListCylinderData[i];
-
-                if(DevToolsRuntime.isOverlays){
-                    mat.color = cylinderData.color;
-                    Graphics.DrawMesh(Cylinder, Matrix4x4.TRS(cylinderData.position, cylinderData.rotation, Vector3.one * cylinderData.radius + Vector3.up * cylinderData.height), mat, 0);
-                }
-
-                if(cylinderData.timer < Time.time)
-                    DevToolsRuntime.ListCylinderData.RemoveAt(i);
-            }
-        }
-
-        void DrawLines(){
-            if(Event.current.type != EventType.Repaint)
-            for(int i = 0; i < DevToolsRuntime.ListLineData.Count; i++){
-                var line = DevToolsRuntime.ListLineData[i];
-
-                if(DevToolsRuntime.isOverlays){
-                    GL.PushMatrix();
-                    mat.SetPass(0);
-                    GL.Begin(GL.LINES);
-                    GL.Color(line.color);
-                    GL.Vertex(line.from);
-                    GL.Vertex(line.to);
-                    GL.End();
-                    GL.PopMatrix();
-                }
-                if(line.timer < Time.time)
-                    DevToolsRuntime.ListLineData.RemoveAt(i);
-            }
-        }
+        }        
 
         void DrawText(){
             for(int i = 0; i < DevToolsRuntime.ListTextData.Count; i++){

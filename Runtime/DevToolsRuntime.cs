@@ -8,12 +8,8 @@ using static DevTools.DevToolsService;
 namespace DevTools {
     public class DevToolsRuntime {
         public static List<DevToolsData> ListGameObjects = new();
-        public static List<DrawLineData> ListLineData = new List<DrawLineData>();
         public static List<DrawTextData> ListTextData = new List<DrawTextData>();
-        public static List<DrawShpereData> ListSphereData = new List<DrawShpereData>();
-        public static List<DrawCubeData> ListCubeData = new List<DrawCubeData>();
-        public static List<DrawCylinderData> ListCylinderData = new List<DrawCylinderData>();
-        public static List<DrawCapsuleData> ListCapsuleData = new List<DrawCapsuleData>();
+        public static List<DrawObjectData> ListObjectsData = new List<DrawObjectData>();
         public static DevToolsComponent CurrentComponent;
         public static GameObject SelectedObject;
         public static bool isOpenDevTools = false;
@@ -27,12 +23,8 @@ namespace DevTools {
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         static void Clear(){
-            ListLineData.Clear();
             ListTextData.Clear();
-            ListSphereData.Clear();
-            ListCapsuleData.Clear();
-            ListCubeData.Clear();
-            ListCylinderData.Clear();
+            ListObjectsData.Clear();
             ListGameObjects.Clear();
         }
 
@@ -78,10 +70,6 @@ namespace DevTools {
 
         public static void Add(string name, TemplateContainer templateContainer) => Add(name, null, templateContainer);
 
-        public static void DrawLine(Vector3 from, Vector3 to, Color color, float timer = 0){
-            ListLineData.Add(new DrawLineData{from = from, to = to, color = color, timer = Time.time + timer});
-        }
-
         public static void DrawText(string text, Vector3 position, Color textColor, Texture2D backColor, Vector2 positionOff = new Vector2(), float timer = 0){
             ListTextData.Add(new DrawTextData{text = text, position = position, color = textColor, texture2D = backColor, positionOff = positionOff, timer = Time.time + timer});
         }
@@ -90,20 +78,24 @@ namespace DevTools {
             ListTextData.Add(new DrawTextData{text = text, position = position, color = textColor, texture2D = backColor, positionOff = positionOff, timer = Time.time + timer});
         }
 
-        public static void DrawSphere(Vector3 position, float radius, Color color, float timer = 0){
-            ListSphereData.Add(new DrawShpereData{position = position, radius = radius, color = color, timer = Time.time + timer});
+        public static void DrawLine(Vector3 from, Vector3 to, Color color, float opacity = 1f, float Size = 0.0025f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, radius = Size, position2 = to, color = color, opacity = opacity, timer = Time.time + timer});
         }
 
-        public static void DrawCube(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float timer = 0){
-            ListCubeData.Add(new DrawCubeData{position = position, rotation = rotation, scale = scale, color = color, timer = Time.time + timer});
+        public static void DrawSphere(Vector3 position, float radius, Color color, float opacity = 0.5f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Sphere, position = position, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
         }
 
-        public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
-            ListCapsuleData.Add(new DrawCapsuleData{position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
+        public static void DrawCube(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float opacity = 0.5f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cube, position = position, rotation = rotation, scale = scale, color = color, opacity = opacity, timer = Time.time + timer});
         }
 
-        public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
-            ListCylinderData.Add(new DrawCylinderData{position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
+        public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float opacity = 0.5f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Capsule, position = position, rotation = rotation, height = height, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
+        }
+
+        public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float opacity = 0.5f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cylinder, position = position, rotation = rotation, height = height, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
         }
     }
 }
