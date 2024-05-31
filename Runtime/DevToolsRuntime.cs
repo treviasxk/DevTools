@@ -56,6 +56,7 @@ namespace DevTools {
             service.AddComponent<DevToolsService>();
             service.AddComponent<PlayerInput>();
             service.AddComponent<UIDocument>();
+            service.hideFlags = HideFlags.HideInHierarchy;
         }
 
         public static void Add(string name, GameObject gameObject, TemplateContainer templateContainer){

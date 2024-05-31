@@ -393,16 +393,16 @@ namespace DevTools {
                     
                     switch(objectData.objectType){
                         case ObjectType.Sphere:
-                            Graphics.RenderMesh(renderParams, Sphere, 0, Matrix4x4.TRS(objectData.position, Quaternion.identity, Vector3.one * objectData.radius));
+                            Graphics.RenderMesh(renderParams, Sphere, 0, Matrix4x4.TRS(objectData.position, Quaternion.identity, Vector3.one * objectData.radius * 2));
                         break;
                         case ObjectType.Cube:
-                            Graphics.RenderMesh(renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale));
+                            Graphics.RenderMesh(renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale * 2));
                         break;
                         case ObjectType.Capsule:
-                            Graphics.RenderMesh(renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height));
+                            Graphics.RenderMesh(renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2));
                         break;
                         case ObjectType.Cylinder:
-                            Graphics.RenderMesh(renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height));
+                            Graphics.RenderMesh(renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2));
                         break;
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
