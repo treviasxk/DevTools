@@ -328,3 +328,11 @@ GroupBox {
     padding-left: 5px;
     -unity-font-style: bold;
 }
+
+#Logs .unity-scroll-view__content-container {
+    flex-direction: column-reverse;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-self: stretch;
+    align-content: stretch;
+}
