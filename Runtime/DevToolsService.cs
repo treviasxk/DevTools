@@ -87,8 +87,6 @@ namespace DevTools {
         List<LogContent> Logs = new();
 
         public void Log(string logString, string stackTrace, LogType type){
-            if(Logs.Count > 100)
-                Logs.RemoveAt(0);
             Logs.Add(new LogContent(){logType = type, text = logString});
             LoadLog();
         }
@@ -106,6 +104,7 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
             uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
             uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = false;
+            uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
 
             uIDocument.rootVisualElement.Q<Label>("title").text = $"{Application.productName} - {Application.companyName}";
             uIDocument.rootVisualElement.Q<Label>("api").text = $"API: {SystemInfo.graphicsDeviceType}";
@@ -123,6 +122,7 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").Clear();
+            LoadLog();
         }
 
 
@@ -262,28 +262,22 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
         }
 
-        int LogCount, LogWarningCount, LogErrorCount;
+        int LogCount;
         void LoadLog(){
             if(uIDocument != null && uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console){
-                while(Logs.Count > 0){
-                    if(Console.childCount > 1000)
+                while(Logs.Count > LogCount){
+                    if(Console.childCount >= 999)
                         Console.RemoveAt(0);
-                    var Log = Logs.ElementAt(0);
-                    Console.Add(new Label((Log.logType == LogType.Warning ? "<color=yellow>" : (Log.logType == LogType.Error ? "<color=red>" : "<color=white>")) + Log.text + "</color>"));
-                    Logs.RemoveAt(0);
 
-                    if(Log.logType == LogType.Log)
-                        LogCount++;
-
-                    if(Log.logType == LogType.Warning)
-                        LogWarningCount++;
-                        
-                    if(Log.logType == LogType.Error)
-                        LogErrorCount++;
+                    var Log = Logs.ElementAt(LogCount);
+                    Label label = new Label((Log.logType == LogType.Warning ? "<color=yellow>[WARNING] " : (Log.logType == LogType.Error || Log.logType == LogType.Exception ? "<color=red>[ERROR] " : "<color=white>[DEBUG] ")) + Log.text + "</color>");
+                    Console.Add(label);
+                    LogCount++;
                 }
-                uIDocument.rootVisualElement.Q<Label>("Log-Count").text = LogCount.ToString();
-                uIDocument.rootVisualElement.Q<Label>("Log-Warning-Count").text = LogWarningCount.ToString();
-                uIDocument.rootVisualElement.Q<Label>("Log-Error-Count").text = LogErrorCount.ToString();
+
+                uIDocument.rootVisualElement.Q<Label>("Log-Count").text = Logs.Where(item => item.logType == LogType.Log).Count().ToString();
+                uIDocument.rootVisualElement.Q<Label>("Log-Warning-Count").text = Logs.Where(item => item.logType == LogType.Warning).Count().ToString();
+                uIDocument.rootVisualElement.Q<Label>("Log-Error-Count").text = Logs.Where(item => item.logType == LogType.Error || item.logType == LogType.Exception).Count().ToString();
             }
         }
 
@@ -297,6 +291,10 @@ namespace DevTools {
 
         void FixedUpdate(){
             if(uIDocument.rootVisualElement != null){
+
+                if(uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console && Console != null)
+                    Console.verticalScroller.value = Console.verticalScroller.value > Console.verticalScroller.highValue - 20 || uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility == ScrollerVisibility.Hidden ? Console.verticalScroller.highValue : Console.verticalScroller.value;
+
                 uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
 
                 if(totalReservedMemoryRecorder.Valid)
@@ -374,6 +372,7 @@ namespace DevTools {
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = DevToolsRuntime.isOpenInspector;
                     uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = true;
+                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
                     LoadLog();
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
@@ -384,6 +383,7 @@ namespace DevTools {
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
                     uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
                     uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = false;
+                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
                     uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays." + "\nPress F4 to show/hide Console.";
                 }
