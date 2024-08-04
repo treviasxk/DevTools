@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Burst;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,17 +8,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace DevTools {
+    [BurstCompile]
     public class DevToolsService : MonoBehaviour {
         public struct DevToolsData {
             public int id;
             public GameObject gameObject;
-            public List<DevToolsComponent> Components;
-        }
-
-        public struct DevToolsComponent{
-            public int id;
-            public string name;
-            public TemplateContainer templateContainer;
+            public List<Component> Components;
         }
 
         public struct DrawTextData{
@@ -45,6 +41,8 @@ namespace DevTools {
         public InputActionAsset inputActionsAssets;
         public VisualTreeAsset visualTreeAsset;
         public PanelSettings panelSettings;
+        public static GameObject SelectedObject;
+        public static Component CurrentComponent;
         PlayerInput playerInput;
         UIDocument uIDocument;
         RenderParams renderParams;
@@ -65,7 +63,7 @@ namespace DevTools {
         }
 
         private void sceneLoaded(Scene arg0, LoadSceneMode arg1){
-            var listObjects = DevToolsRuntime.ListGameObjects.Where(item => item.id == -1).ToArray();
+            var listObjects = DevTools.ListGameObjects.Where(item => item.id == -1).ToArray();
             if(uIDocument.rootVisualElement != null){
                 var root = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
                 for(int i = 0; i < listObjects.Length; i++){
@@ -73,7 +71,7 @@ namespace DevTools {
                         var itemObject = root.Q<Button>(listObjects[i].id.ToString());
                         if(itemObject != null)
                             root.Remove(itemObject);
-                        DevToolsRuntime.ListGameObjects.Remove(listObjects[i]);
+                        DevTools.ListGameObjects.Remove(listObjects[i]);
                     }
                 }
             }
@@ -88,7 +86,6 @@ namespace DevTools {
 
         public void Log(string logString, string stackTrace, LogType type){
             Logs.Add(new LogContent(){logType = type, text = logString});
-            LoadLog();
         }
 
         void Start(){
@@ -117,17 +114,16 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
             
             if(playerInput.currentActionMap != null)
-                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString()  + " to show/hide Overlays. \nPress " + playerInput.currentActionMap.FindAction("Console").GetBindingDisplayString() + " to show/hide Console.";
+                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString()  + " to show/hide Overlays. \nPress " + playerInput.currentActionMap.FindAction("Console").GetBindingDisplayString() + " to show/hide Console.";
             uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").Clear();
-            LoadLog();
         }
 
 
         void ShowGraphic(){
-            DevToolsRuntime.SelectedObject = gameObject;
+            SelectedObject = gameObject;
 
             var root = uIDocument.rootVisualElement.Q<ScrollView>("Components");
             root.Clear();
@@ -205,7 +201,7 @@ namespace DevTools {
 
 
         void ShowScenes(){
-            DevToolsRuntime.SelectedObject = gameObject;
+            SelectedObject = gameObject;
 
             var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
             components.Clear();
@@ -225,7 +221,7 @@ namespace DevTools {
         }
 
         void ShowResolutions(){
-            DevToolsRuntime.SelectedObject = gameObject;
+            SelectedObject = gameObject;
 
             var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
             components.Clear();
@@ -249,11 +245,11 @@ namespace DevTools {
         void ShowComponents(){
             var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
             components.Clear();
-            if(DevToolsRuntime.ListGameObjects.First(item => item.gameObject == DevToolsRuntime.SelectedObject) is var itemObject)
+            if(DevTools.ListGameObjects.First(item => item.gameObject == DevTools.SelectedObject) is var itemObject)
             foreach(var itemComponent in itemObject.Components){
                 // check button exite and add or remove
                 components.Add(new Button(()=>{
-                    DevToolsRuntime.CurrentComponent = itemComponent;
+                    CurrentComponent = itemComponent;
                     ShowInspector(itemComponent);
                 }){text = itemComponent.name});
             }
@@ -263,7 +259,7 @@ namespace DevTools {
         }
 
         int LogCount;
-        void LoadLog(){
+        void RenderLog(){
             if(uIDocument != null && uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console){
                 while(Logs.Count > LogCount){
                     if(Console.childCount >= 999)
@@ -281,9 +277,9 @@ namespace DevTools {
             }
         }
 
-        void ShowInspector(DevToolsComponent devToolsComponent){
+        void ShowInspector(Component devToolsComponent){
             uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = true;
-            DevToolsRuntime.isOpenInspector = true;
+            DevTools.isOpenInspector = true;
             var root = uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent");
             root.Clear();
             root.Add(devToolsComponent.templateContainer);
@@ -292,8 +288,9 @@ namespace DevTools {
         void FixedUpdate(){
             if(uIDocument.rootVisualElement != null){
 
+                // Lock scroll
                 if(uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console && Console != null)
-                    Console.verticalScroller.value = Console.verticalScroller.value > Console.verticalScroller.highValue - 20 || uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility == ScrollerVisibility.Hidden ? Console.verticalScroller.highValue : Console.verticalScroller.value;
+                    Console.verticalScroller.value = Console.verticalScroller.value > Console.verticalScroller.highValue % 20 || uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility == ScrollerVisibility.Hidden ? Console.verticalScroller.highValue : Console.verticalScroller.value;
 
                 uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
 
@@ -310,14 +307,14 @@ namespace DevTools {
                 var listObjects = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
 
                 // update ListObjects registed, usage For loop because conflit in changed scene
-                for(int i = 0; i < DevToolsRuntime.ListGameObjects.Count; i++){
-                    var itemObject = DevToolsRuntime.ListGameObjects[i];
+                for(int i = 0; i < DevTools.ListGameObjects.Count; i++){
+                    var itemObject = DevTools.ListGameObjects[i];
                     if(itemObject.id != -1 && !itemObject.gameObject){
                         listObjects.Remove(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()));
-                        DevToolsRuntime.ListGameObjects.Remove(itemObject);
+                        DevTools.ListGameObjects.Remove(itemObject);
                     }else{
                         if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
-                            listObjects.Add(new Button(()=>{DevToolsRuntime.SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
+                            listObjects.Add(new Button(()=>{SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
                         }else
                             if(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()) is var button)
                                 button.text = itemObject.id != -1 ? itemObject.gameObject.name : "System";
@@ -340,13 +337,14 @@ namespace DevTools {
             systemUsedMemoryRecorder.Dispose();
         }
 
-        bool isOverlaysTmp = false, isInspectorTmp = false;
+        bool isOverlaysTmp = false, isInspectorTmp = false, isConsoleTmp = false;
         CursorLockMode cursorLockMode;
         int fps, fpsCount;
         float fpsTimerCount, fpsTimerTmp, timerFps;
         void Update(){
             // Renders
             RenderObjects();
+            RenderLog();
 
             fpsTimerCount = Time.time - fpsTimerTmp;
             fpsTimerTmp = Time.time;
@@ -359,51 +357,76 @@ namespace DevTools {
             }else
                 fpsCount++;
 
+            // Command line console
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Enter").triggered){
+                if(uIDocument.rootVisualElement.Q<TextField>("CommandLine") is var TextField && TextField != null && uIDocument.rootVisualElement.Q<VisualElement>("Console").visible){
+                    if(TextField.value != ""){
+                        if(DevTools.ListCommandLine.ContainsKey(TextField.value)){
+                            DevTools.ListCommandLine[TextField.value]?.Invoke();
+                        }else
+                            Logs.Add(new LogContent(){text = "Invalid command!", logType = LogType.Error});
+                        TextField.value = "";
+                    }
+                }
+            }
+
+            // Open DevTools
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("DevTools").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
-                DevToolsRuntime.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
+                DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
                 
-                if(DevToolsRuntime.isOpenDevTools){
+                if(DevTools.isOpenDevTools){
                     StartCount();
                     cursorLockMode = UnityEngine.Cursor.lockState;
-                    isOverlaysTmp = DevToolsRuntime.isOverlays;
-                    DevToolsRuntime.isOverlays = true;
+                    isOverlaysTmp = DevTools.isOverlays;
+                    DevTools.isOverlays = true;
                     isInspectorTmp = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
+                    isConsoleTmp = uIDocument.rootVisualElement.Q<VisualElement>("Console").visible;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
-                    uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = DevToolsRuntime.isOpenInspector;
-                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = true;
-                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
-                    LoadLog();
+                    uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = DevTools.isOpenInspector;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = DevTools.isOpenConsole;
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
                     StopCount();
                     UnityEngine.Cursor.lockState = cursorLockMode;
-                    DevToolsRuntime.isOverlays = isOverlaysTmp;
+                    DevTools.isOverlays = isOverlaysTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = isInspectorTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
                     uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
-                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = false;
-                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = isConsoleTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
-                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevToolsRuntime.CurrentComponent.Equals(new DevToolsComponent()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays." + "\nPress F4 to show/hide Console.";
+                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays." + "\nPress F4 to show/hide Console.";
                 }
-                DevToolsRuntime.SelectedObject = null;
+                SelectedObject = null;
             }
 
-            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Console").triggered){
-                uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = !uIDocument.rootVisualElement.Q<VisualElement>("Console").visible;
-                if(uIDocument.rootVisualElement.Q<VisualElement>("Console").visible)
-                    LoadLog();
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Console").triggered && uIDocument.rootVisualElement.Q<VisualElement>("Console") is var Console && Console != null){
+                Console.visible = !Console.visible;
+                DevTools.isOpenConsole = Console.visible;
+
+                if(Console.visible){
+                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
+                    Console.style.height = Length.Percent(50);
+                }else
+                    Console.style.height = Length.Percent(25);
+
+                if(Console.visible)
+                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
+                else
+                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
             }
+
+            if(DevTools.isOpenConsole)
+                uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
 
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Inspector").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = !uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
             }
 
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Overlays").triggered)
-                DevToolsRuntime.isOverlays = !DevToolsRuntime.isOverlays;
+                DevTools.isOverlays = !DevTools.isOverlays;
 
-            if(DevToolsRuntime.isOpenDevTools)
+            if(DevTools.isOpenDevTools)
                 UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
 
@@ -423,8 +446,8 @@ namespace DevTools {
         void OnGUI(){
             if(Debug.isDebugBuild){
                 // Draw text objects
-                if(DevToolsRuntime.isOverlays)
-                foreach(var item in DevToolsRuntime.ListGameObjects)
+                if(DevTools.isOverlays)
+                foreach(var item in DevTools.ListGameObjects)
                     if(item.gameObject)
                         RenderText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
                 
@@ -434,10 +457,10 @@ namespace DevTools {
         }
 
         void RenderObjects(){
-            for(int i = 0; i < DevToolsRuntime.ListObjectsData.Count; i++){
-                var objectData = DevToolsRuntime.ListObjectsData[i];
+            for(int i = 0; i < DevTools.ListObjectsData.Count; i++){
+                var objectData = DevTools.ListObjectsData[i];
 
-                if(DevToolsRuntime.isOverlays){
+                if(DevTools.isOverlays){
                     objectData.color.a = Mathf.Clamp(objectData.opacity, 0f, 1f);
                     materialPropertyBlock.SetColor("_Color", objectData.color);
                     
@@ -463,19 +486,19 @@ namespace DevTools {
                 }
 
                 if(objectData.timer <= Time.time)
-                    DevToolsRuntime.ListObjectsData.RemoveAt(i);
+                    DevTools.ListObjectsData.RemoveAt(i);
             }
         }        
 
         void DrawText(){
-            for(int i = 0; i < DevToolsRuntime.ListTextData.Count; i++){
-                var textData = DevToolsRuntime.ListTextData[i];
+            for(int i = 0; i < DevTools.ListTextData.Count; i++){
+                var textData = DevTools.ListTextData[i];
 
-                if(DevToolsRuntime.isOverlays)
+                if(DevTools.isOverlays)
                     RenderText(textData.text, textData.position, textData.color, textData.texture2D, textData.positionOff);
 
                 if(textData.timer < Time.time)
-                    DevToolsRuntime.ListTextData.RemoveAt(i);
+                    DevTools.ListTextData.RemoveAt(i);
             }
         }
 
