@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Unity.Burst;
 using Unity.Profiling;
 using UnityEngine;
@@ -36,6 +37,14 @@ namespace DevTools {
             public Quaternion rotation;
             public Vector3 scale;
             public float height;
+        }
+
+        // LogType Unity values
+        // error = 0, assets = 1, warnings = 2, log = 3, execption = 4
+        enum LogsType {Log = 3, Warning = 2, Error = 0&1&4, Success = 5, Result = 6}
+        struct LogContent{
+            public LogsType type;
+            public string text;
         }
 
         public InputActionAsset inputActionsAssets;
@@ -77,15 +86,10 @@ namespace DevTools {
             }
         }
 
-        struct LogContent{
-            public LogType logType;
-            public string text;
-        }
-
         List<LogContent> Logs = new();
 
         public void Log(string logString, string stackTrace, LogType type){
-            Logs.Add(new LogContent(){logType = type, text = logString});
+            Logs.Add(new LogContent(){type = (LogsType)type, text = logString});
         }
 
         void Start(){
@@ -100,7 +104,7 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = false;
             uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
             uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
-            uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = false;
+            uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = false;
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
 
             uIDocument.rootVisualElement.Q<Label>("title").text = $"{Application.productName} - {Application.companyName}";
@@ -114,13 +118,36 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
             
             if(playerInput.currentActionMap != null)
-                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString()  + " to show/hide Overlays. \nPress " + playerInput.currentActionMap.FindAction("Console").GetBindingDisplayString() + " to show/hide Console.";
+                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString()  + " to show/hide Overlays. \nPress " + playerInput.currentActionMap.FindAction("Terminal").GetBindingDisplayString() + " to show/hide Terminal.";
             uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").Clear();
+            uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
+
+
+            DevTools.AddCommand("prefix", "Devtools", (string[] cmd) => {ShowPrefix();}, "Shows all command prefix.");
+            DevTools.AddCommand("clear", "Devtools", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
+            DevTools.AddCommand("quit", "Devtools", (string[] cmd) => {Application.Quit();}, "Quit game.");
         }
 
+        void ClearTerminal(){
+            if(uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is var Terminal && Terminal != null)
+                Terminal.Clear();
+        }
+
+        void ShowPrefix(){
+            if(DevTools.ListCommandLine.Count > 0){
+                string text = "============ Available Prefix ============\n";
+                var list = DevTools.ListCommandLine.GroupBy(item => item.Item1);
+                for(int i = 0; i < list.Count(); i++)
+                    text += list.ElementAt(i).Key + "\n";
+                text += "=====================================\n";
+                Logs.Add(new LogContent(){text = text, type = LogsType.Result});
+            }else{
+                Logs.Add(new LogContent(){text = "No prefix available!", type = LogsType.Result});
+            }
+        }
 
         void ShowGraphic(){
             SelectedObject = gameObject;
@@ -206,7 +233,7 @@ namespace DevTools {
             var components = uIDocument.rootVisualElement.Q<ScrollView>("Components");
             components.Clear();
 
-            var regex = new System.Text.RegularExpressions.Regex(@"([^/]*/)*([\w\d\-]*)\.unity");
+            var regex = new Regex(@"([^/]*/)*([\w\d\-]*)\.unity");
             for(int i = 0; i < SceneManager.sceneCountInBuildSettings; i++){
                 int index = i;
                 components.Add(new Button(()=>{
@@ -260,20 +287,20 @@ namespace DevTools {
 
         int LogCount;
         void RenderLog(){
-            if(uIDocument != null && uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console){
+            if(uIDocument != null && uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Terminal){
                 while(Logs.Count > LogCount){
-                    if(Console.childCount >= 999)
-                        Console.RemoveAt(0);
+                    if(Terminal.childCount >= 999)
+                        Terminal.RemoveAt(0);
 
                     var Log = Logs.ElementAt(LogCount);
-                    Label label = new Label((Log.logType == LogType.Warning ? "<color=yellow>[WARNING] " : (Log.logType == LogType.Error || Log.logType == LogType.Exception ? "<color=red>[ERROR] " : "<color=white>[DEBUG] ")) + Log.text + "</color>");
-                    Console.Add(label);
+                    Label label = new Label(Log.type == LogsType.Result ? Log.text : (Log.type == LogsType.Success ? "<color=green>[OK] " : (Log.type == LogsType.Warning ? "<color=orange>[WARNING] " : (Log.type == LogsType.Error ? "<color=red>[ERROR] " : "<color=white>[DEBUG] "))) + Log.text + "</color>");
+                    Terminal.Add(label);
                     LogCount++;
                 }
 
-                uIDocument.rootVisualElement.Q<Label>("Log-Count").text = Logs.Where(item => item.logType == LogType.Log).Count().ToString();
-                uIDocument.rootVisualElement.Q<Label>("Log-Warning-Count").text = Logs.Where(item => item.logType == LogType.Warning).Count().ToString();
-                uIDocument.rootVisualElement.Q<Label>("Log-Error-Count").text = Logs.Where(item => item.logType == LogType.Error || item.logType == LogType.Exception).Count().ToString();
+                uIDocument.rootVisualElement.Q<Label>("Log-Count").text = Logs.Where(item => item.type == LogsType.Log).Count().ToString();
+                uIDocument.rootVisualElement.Q<Label>("Log-Warning-Count").text = Logs.Where(item => item.type == LogsType.Warning).Count().ToString();
+                uIDocument.rootVisualElement.Q<Label>("Log-Error-Count").text = Logs.Where(item => item.type == LogsType.Error).Count().ToString();
             }
         }
 
@@ -289,8 +316,8 @@ namespace DevTools {
             if(uIDocument.rootVisualElement != null){
 
                 // Lock scroll
-                if(uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Console && Console != null)
-                    Console.verticalScroller.value = Console.verticalScroller.value > Console.verticalScroller.highValue % 20 || uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility == ScrollerVisibility.Hidden ? Console.verticalScroller.highValue : Console.verticalScroller.value;
+                if(uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView Terminal && Terminal != null)
+                    Terminal.verticalScroller.value = Terminal.verticalScroller.value > Terminal.verticalScroller.highValue % 20 || uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility == ScrollerVisibility.Hidden ? Terminal.verticalScroller.highValue : Terminal.verticalScroller.value;
 
                 uIDocument.rootVisualElement.Q<Label>("fps").text = $"FPS : {fps} ({(fpsTimerCount * 1000).ToString("0.00")}ms)";
 
@@ -337,7 +364,7 @@ namespace DevTools {
             systemUsedMemoryRecorder.Dispose();
         }
 
-        bool isOverlaysTmp = false, isInspectorTmp = false, isConsoleTmp = false;
+        bool isOverlaysTmp = false, isInspectorTmp = false, isTerminalTmp = false;
         CursorLockMode cursorLockMode;
         int fps, fpsCount;
         float fpsTimerCount, fpsTimerTmp, timerFps;
@@ -357,14 +384,50 @@ namespace DevTools {
             }else
                 fpsCount++;
 
-            // Command line console
+            // Command line Terminal
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Enter").triggered){
-                if(uIDocument.rootVisualElement.Q<TextField>("CommandLine") is var TextField && TextField != null && uIDocument.rootVisualElement.Q<VisualElement>("Console").visible){
+                if(uIDocument.rootVisualElement.Q<TextField>("CommandLine") is var TextField && TextField != null && uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible){
                     if(TextField.value != ""){
-                        if(DevTools.ListCommandLine.ContainsKey(TextField.value)){
-                            DevTools.ListCommandLine[TextField.value]?.Invoke();
-                        }else
-                            Logs.Add(new LogContent(){text = "Invalid command!", logType = LogType.Error});
+                        TextField.value = TextField.value.ToLower();
+                        string[] commands = GetWords(TextField.value);
+                        switch(commands[0]){
+                            case "commands":
+                                if(DevTools.ListCommandLine.Count > 0){
+                                    string text = "============== Available commands ==============\nPrefix:\t\t\tCommand:\t\t\tDescription:\n";
+                                    var list = DevTools.ListCommandLine.OrderBy(item => item.Item2).OrderBy(item => item.Item1).ToList();
+                                    for(int i = 0; i < list.Count; i++)
+                                        text += list.ElementAt(i).Item2 +"\t\t\t" + (list.ElementAt(i).Item2.Length < 7 ? "\t" : "") + list.ElementAt(i).Item1 +"\t\t\t" + (list.ElementAt(i).Item1.Length < 7 ? "\t" : "") + list.ElementAt(i).Item4 + "\n";
+                                    text += "=============================================";
+                                    Logs.Add(new LogContent(){text = text, type = LogsType.Result});
+                                }else{
+                                    Logs.Add(new LogContent(){text = "No command available!", type = LogsType.Result});
+                                }
+                            break;
+                            default:
+                                if(commands.Length > 1 && DevTools.ListCommandLine.Any(item => item.Item2 == commands[0] && item.Item1 == commands[1])){
+                                    DevTools.ListCommandLine.First(item => item.Item2 == commands[0] && item.Item1 == commands[1])?.Item3?.Invoke(commands.Length > 2 ? commands.Skip(2).ToArray() : new string[]{""});
+                                    Logs.Add(new LogContent(){text = TextField.value, type = LogsType.Success});
+
+                                }else
+                                if(commands.Length >= 1 && DevTools.ListCommandLine.Any(item => item.Item1 == commands[0])){
+                                    var list = DevTools.ListCommandLine.Where(item => item.Item1 == commands[0]);
+                                    if(list.Count() == 1)
+                                        DevTools.ListCommandLine.First(item => item.Item1 == commands[0])?.Item3?.Invoke(commands.Length > 1 ? commands.Skip(1).ToArray() : new string[]{""});
+                                    else
+                                        Logs.Add(new LogContent(){text = "There is more than 1 '" + commands[0] + "' command, use the prefix to specify the command.", type = LogsType.Warning});
+                                }else
+                                if(commands.Length == 1 && DevTools.ListCommandLine.Any(item => item.Item2 == commands[0])){
+                                    // show commands from a Prefix
+                                    var list = DevTools.ListCommandLine.Where(item => item.Item2 == commands[0]);
+                                    string text = "============== Available commands ==============\nPrefix:\t\t\tCommand:\t\t\tDescription:\n";
+                                    for(int i = 0; i < list.Count(); i++)
+                                        text += list.ElementAt(i).Item2 +"\t\t\t" + (list.ElementAt(i).Item2.Length < 7 ? "\t" : "") + list.ElementAt(i).Item1 + "\t\t\t" + (list.ElementAt(i).Item1.Length < 7 ? "\t" : "") + list.ElementAt(i).Item4 + "\n";
+                                    text += "=============================================";
+                                    Logs.Add(new LogContent(){text = text, type = LogsType.Result});
+                                }else
+                                    Logs.Add(new LogContent(){text ="'" + TextField.value + "' is Invalid!, use 'commands' to see command lists!", type = LogsType.Result});
+                            break;
+                        }
                         TextField.value = "";
                     }
                 }
@@ -373,7 +436,7 @@ namespace DevTools {
             // Open DevTools
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("DevTools").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
-                DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
+                DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible || uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible;
                 
                 if(DevTools.isOpenDevTools){
                     StartCount();
@@ -381,10 +444,10 @@ namespace DevTools {
                     isOverlaysTmp = DevTools.isOverlays;
                     DevTools.isOverlays = true;
                     isInspectorTmp = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
-                    isConsoleTmp = uIDocument.rootVisualElement.Q<VisualElement>("Console").visible;
+                    isTerminalTmp = uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = DevTools.isOpenInspector;
-                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = DevTools.isOpenConsole;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = DevTools.isOpenTerminal;
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
                     StopCount();
@@ -393,30 +456,31 @@ namespace DevTools {
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = isInspectorTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
                     uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
-                    uIDocument.rootVisualElement.Q<VisualElement>("Console").visible = isConsoleTmp;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = isTerminalTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
-                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F2 to open/close current Inspector." : "") + "\nPress F3 to show/hide Overlays." + "\nPress F4 to show/hide Console.";
+                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
                 }
                 SelectedObject = null;
             }
 
-            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Console").triggered && uIDocument.rootVisualElement.Q<VisualElement>("Console") is var Console && Console != null){
-                Console.visible = !Console.visible;
-                DevTools.isOpenConsole = Console.visible;
+            if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Terminal").triggered && uIDocument.rootVisualElement.Q<VisualElement>("Terminal") is var Terminal && Terminal != null){
+                Terminal.visible = !Terminal.visible;
+                DevTools.isOpenTerminal = Terminal.visible;
+                DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible || uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible;
 
-                if(Console.visible){
+                if(Terminal.visible){
                     uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
-                    Console.style.height = Length.Percent(50);
+                    Terminal.style.height = Length.Percent(50);
                 }else
-                    Console.style.height = Length.Percent(25);
+                    Terminal.style.height = Length.Percent(25);
 
-                if(Console.visible)
+                if(Terminal.visible)
                     uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
                 else
                     uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
             }
 
-            if(DevTools.isOpenConsole)
+            if(DevTools.isOpenTerminal)
                 uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
 
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("Inspector").triggered){
@@ -430,6 +494,17 @@ namespace DevTools {
                 UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
 
+        private static string[] GetWords(string text){
+            List<string> lstreturn = new List<string>();
+            List<string> lst = text.Split(new[]{' '}).ToList();
+            foreach(string str in lst){
+                lstreturn.Add(str.Replace(" ", ""));
+            }
+
+            if(lstreturn.Count == 0)
+                lstreturn.Add(text);
+            return lstreturn.ToArray();
+        }
 
         static GUIStyle style = new GUIStyle();
         void RenderText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){

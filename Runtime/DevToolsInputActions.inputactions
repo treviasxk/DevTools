@@ -33,7 +33,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Console",
+                    "name": "Terminal",
                     "type": "Button",
                     "id": "b3569b62-d6fc-4303-989b-f04da8a4ff16",
                     "expectedControlType": "",
@@ -55,7 +55,7 @@
                 {
                     "name": "",
                     "id": "66bec4c8-3fb2-4d0e-b3e5-44ce16088f2b",
-                    "path": "<Keyboard>/f1",
+                    "path": "<Keyboard>/f2",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -77,7 +77,7 @@
                 {
                     "name": "",
                     "id": "85b0b6fd-21d4-423f-82d0-8fb7326a5deb",
-                    "path": "<Keyboard>/f2",
+                    "path": "<Keyboard>/f4",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -88,11 +88,11 @@
                 {
                     "name": "",
                     "id": "6132b951-e79b-4f1b-ae2c-08a77dc02cad",
-                    "path": "<Keyboard>/f4",
+                    "path": "<Keyboard>/f1",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Console",
+                    "action": "Terminal",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

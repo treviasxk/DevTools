@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst;
@@ -19,12 +18,12 @@ namespace DevTools {
         public static List<DevToolsData> ListGameObjects = new();
         public static List<DrawTextData> ListTextData = new List<DrawTextData>();
         public static List<DrawObjectData> ListObjectsData = new List<DrawObjectData>();
-        public static ConcurrentDictionary<string, System.Action> ListCommandLine = new();
+        public static List<System.Tuple<string, string, System.Action<string[]>, string>> ListCommandLine = new();
         public static Component CurrentComponent {get{return DevToolsService.CurrentComponent;}}
         public static GameObject SelectedObject {get{return DevToolsService.SelectedObject;}}
         public static bool isOpenDevTools {get;set;} = false;
         public static bool isOpenInspector {get;set;} = false;
-        public static bool isOpenConsole {get;set;} = false;
+        public static bool isOpenTerminal {get;set;} = false;
         public static bool isOverlays {get;set;} = false;
         
         #if UNITY_EDITOR && UBuild
@@ -45,7 +44,7 @@ namespace DevTools {
             DevToolsService.SelectedObject = null;
             DevToolsService.CurrentComponent = new Component();
             isOpenInspector = false;
-            isOpenConsole = false;
+            isOpenTerminal = false;
             isOpenDevTools = false;
             isOverlays = false;
 
@@ -97,17 +96,26 @@ namespace DevTools {
         public static void AddComponent(string name, TemplateContainer templateContainer) => AddComponent(name, templateContainer, null);
 
         /// <summary>
-        /// Create commands to be executed when entered into the console.
+        /// Create commands to be executed when entered into the Terminal.
         /// </summary>
         /// <param name="command">Command Line</param>
+        /// <param name="prefix">Prefix is used to organize commands. for example: player, car, weather, map, etc.</param>
         /// <param name="action">Action to be executed</param>
-        public static void AddCommandLine(string command, System.Action action) => ListCommandLine.TryAdd(command, action);
+        /// <param name="description">Category description.</param>
+        public static void AddCommand(string command, string prefix, System.Action<string[]> action, string description){
+            if(ListCommandLine.Any(item => item.Item1 == command && item.Item2 == prefix))
+                ListCommandLine.Remove(ListCommandLine.First(item => item.Item1 == command && item.Item2 == prefix));
+            ListCommandLine.Add(new System.Tuple<string, string, System.Action<string[]>, string>(command.ToLower(), prefix.ToLower(), action, description));
+        }
 
         /// <summary>
-        /// Remove an existing command from the console
+        /// Remove an existing command from the Terminal
         /// </summary>
         /// <param name="command">Command Line</param>
-        public static void RemoveCommandLine(string command) => ListCommandLine.TryRemove(command, out _);
+        public static void RemoveCommand(string command, string prefix){
+            if(ListCommandLine.Any(item => item.Item1 == command && item.Item2 == prefix))
+                ListCommandLine.Remove(ListCommandLine.First(item => item.Item1 == command && item.Item2 == prefix));
+        }
 
         /// <summary>   
         /// Add an overlay Label to your game world.
