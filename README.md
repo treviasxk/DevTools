@@ -15,9 +15,6 @@ DevTools is a tool to help create Debug systems. It has a simple API, organized 
 * Optimized to run at full performance.
 
 ## Donate
- - Brazil
- PIX: trevias@live.com
- - International
  Paypal: trevias@live.com
 
 ## Installation
