@@ -102,7 +102,7 @@ namespace DevTools {
         /// <param name="prefix">Prefix is used to organize commands. for example: player, car, weather, map, etc.</param>
         /// <param name="action">Action to be executed</param>
         /// <param name="description">Category description.</param>
-        public static void AddCommand(string command, string prefix, System.Action<string[]> action, string description){
+        public static void AddCommand(string prefix, string command, System.Action<string[]> action, string description){
             if(ListCommandLine.Any(item => item.Item1 == command && item.Item2 == prefix))
                 ListCommandLine.Remove(ListCommandLine.First(item => item.Item1 == command && item.Item2 == prefix));
             ListCommandLine.Add(new System.Tuple<string, string, System.Action<string[]>, string>(command.ToLower(), prefix.ToLower(), action, description));
@@ -112,7 +112,7 @@ namespace DevTools {
         /// Remove an existing command from the Terminal
         /// </summary>
         /// <param name="command">Command Line</param>
-        public static void RemoveCommand(string command, string prefix){
+        public static void RemoveCommand(string prefix, string command){
             if(ListCommandLine.Any(item => item.Item1 == command && item.Item2 == prefix))
                 ListCommandLine.Remove(ListCommandLine.First(item => item.Item1 == command && item.Item2 == prefix));
         }

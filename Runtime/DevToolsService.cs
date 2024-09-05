@@ -126,9 +126,9 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
 
 
-            DevTools.AddCommand("prefix", "Devtools", (string[] cmd) => {ShowPrefix();}, "Shows all command prefix.");
-            DevTools.AddCommand("clear", "Devtools", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
-            DevTools.AddCommand("quit", "Devtools", (string[] cmd) => {Application.Quit();}, "Quit game.");
+            DevTools.AddCommand("Devtools", "prefix", (string[] cmd) => {ShowPrefix();}, "Shows all command prefix.");
+            DevTools.AddCommand("Devtools", "clear", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
+            DevTools.AddCommand("Devtools", "quit", (string[] cmd) => {Application.Quit();}, "Quit game.");
         }
 
         void ClearTerminal(){
