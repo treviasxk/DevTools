@@ -15,14 +15,13 @@ namespace DevTools {
             public int id;
             public GameObject gameObject;
             public List<Component> Components;
+            public DrawTextData drawTextData;
         }
 
-        public struct DrawTextData{
-            public string text;
+        public class DrawTextData{
+            public Label label;
             public Vector3 position;
-            public Color color;
             public Vector2 positionOff;
-            public Texture2D texture2D;
             public float timer;
         }
 
@@ -68,6 +67,7 @@ namespace DevTools {
             materialPropertyBlock = new MaterialPropertyBlock();
             renderParams = new RenderParams(new Material(Shader.Find("DevTools/Debug"))){matProps = materialPropertyBlock};
             renderParams.material.enableInstancing = true;
+            renderParams.layer = 2; // 2 = Ignore raycast
             DontDestroyOnLoad(gameObject);
         }
 
@@ -337,14 +337,24 @@ namespace DevTools {
                 for(int i = 0; i < DevTools.ListGameObjects.Count; i++){
                     var itemObject = DevTools.ListGameObjects[i];
                     if(itemObject.id != -1 && !itemObject.gameObject){
+                        // Remove
+                        itemObject.drawTextData.timer = 0;
                         listObjects.Remove(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()));
                         DevTools.ListGameObjects.Remove(itemObject);
                     }else{
                         if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
+                            if(itemObject.gameObject)
+                                DevTools.ListTextData.Add(itemObject.drawTextData);
                             listObjects.Add(new Button(()=>{SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
-                        }else
+                        }else{
+                            if(itemObject.gameObject){
+                                itemObject.drawTextData.timer = Time.time + 5f;
+                                itemObject.drawTextData.position = itemObject.gameObject.transform.position;
+                                itemObject.drawTextData.label.text = itemObject.gameObject.name;
+                            }
                             if(uIDocument.rootVisualElement.Q<Button>(itemObject.id.ToString()) is var button)
                                 button.text = itemObject.id != -1 ? itemObject.gameObject.name : "System";
+                        }
                     }
                 }
             }
@@ -372,6 +382,7 @@ namespace DevTools {
             // Renders
             RenderObjects();
             RenderLog();
+            DrawText();
 
             fpsTimerCount = Time.time - fpsTimerTmp;
             fpsTimerTmp = Time.time;
@@ -506,31 +517,6 @@ namespace DevTools {
             return lstreturn.ToArray();
         }
 
-        static GUIStyle style = new GUIStyle();
-        void RenderText(string text, Vector3 target, Color color, Texture2D texture2D, Vector2 positionOff = new Vector2()){
-            var position = Camera.main.WorldToScreenPoint(target);
-            var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
-            style.normal.textColor = color;
-            style.normal.background = texture2D;
-            style.alignment = TextAnchor.MiddleCenter;
-
-            if(position.z > 0)  // Hide label off border camera
-                GUI.Label(new Rect(position.x - (textSize.x + 10) / 2 + positionOff.x, Screen.height - position.y +  positionOff.y, textSize.x + 10, textSize.y), text, style);
-        }
-
-        void OnGUI(){
-            if(Debug.isDebugBuild){
-                // Draw text objects
-                if(DevTools.isOverlays)
-                foreach(var item in DevTools.ListGameObjects)
-                    if(item.gameObject)
-                        RenderText(item.gameObject.name, item.gameObject.transform.position, Color.white, Texture2D.grayTexture);
-                
-                // Renders
-                DrawText();
-            }
-        }
-
         void RenderObjects(){
             for(int i = 0; i < DevTools.ListObjectsData.Count; i++){
                 var objectData = DevTools.ListObjectsData[i];
@@ -569,11 +555,22 @@ namespace DevTools {
             for(int i = 0; i < DevTools.ListTextData.Count; i++){
                 var textData = DevTools.ListTextData[i];
 
-                if(DevTools.isOverlays)
-                    RenderText(textData.text, textData.position, textData.color, textData.texture2D, textData.positionOff);
+                if(DevTools.isOverlays){
+                    textData.label.transform.position = RuntimePanelUtils.CameraTransformWorldToPanel(uIDocument.rootVisualElement.Q<VisualElement>("Runtime").panel, textData.position, Camera.main) - new Vector2(textData.label.resolvedStyle.width / 2, textData.label.resolvedStyle.height / 2) + textData.positionOff;
+                    textData.label.visible = true;
+                    if(!uIDocument.rootVisualElement.Contains(textData.label)){
+                        textData.label.style.position = Position.Absolute;
+                        uIDocument.rootVisualElement.Q<VisualElement>("Runtime").Add(textData.label);
+                        textData.label.visible = false;
+                    }
+                }else
+                    textData.label.visible = false;
 
-                if(textData.timer < Time.time)
+                if(textData.timer < Time.time){
+                    if(uIDocument.rootVisualElement.Contains(textData.label))
+                        uIDocument.rootVisualElement.Q<VisualElement>("Runtime").Remove(textData.label);
                     DevTools.ListTextData.RemoveAt(i);
+                }
             }
         }
 

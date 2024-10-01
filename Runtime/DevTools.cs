@@ -15,10 +15,10 @@ namespace DevTools {
 
     [BurstCompile]
     public class DevTools {
-        public static List<DevToolsData> ListGameObjects = new();
-        public static List<DrawTextData> ListTextData = new List<DrawTextData>();
-        public static List<DrawObjectData> ListObjectsData = new List<DrawObjectData>();
-        public static List<System.Tuple<string, string, System.Action<string[]>, string>> ListCommandLine = new();
+        internal static List<DevToolsData> ListGameObjects = new();
+        internal static List<DrawTextData> ListTextData = new List<DrawTextData>();
+        internal static List<DrawObjectData> ListObjectsData = new List<DrawObjectData>();
+        internal static List<System.Tuple<string, string, System.Action<string[]>, string>> ListCommandLine = new();
         public static Component CurrentComponent {get{return DevToolsService.CurrentComponent;}}
         public static GameObject SelectedObject {get{return DevToolsService.SelectedObject;}}
         public static bool isOpenDevTools {get;set;} = false;
@@ -80,9 +80,12 @@ namespace DevTools {
         /// <param name="gameObject">Bind gameobject to component.</param>
         /// <param name="templateContainer">UI Toolkit to be displayed in inspector.</param>
         public static void AddComponent(string name, TemplateContainer templateContainer, GameObject gameObject){
-            if(!ListGameObjects.Any(item => item.gameObject == gameObject))
-                ListGameObjects.Add(new(){ id = gameObject ? gameObject.GetHashCode() : -1, gameObject = gameObject, Components = new(){{new Component(){ id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer}}}});
-            else{
+            if(!ListGameObjects.Any(item => item.gameObject == gameObject)){
+                var Label = new Label(gameObject.name);
+                Label.style.color = Color.white;
+                Label.style.backgroundColor = new Color(1f, 1f, 1f, 0.1f);
+                ListGameObjects.Add(new(){drawTextData = new DrawTextData(){label = Label, timer = Time.time + 5}, id = gameObject ? gameObject.GetHashCode() : -1, gameObject = gameObject, Components = new(){{new Component(){ id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer}}}});
+            }else{
                 var itemObject = ListGameObjects.First(item => item.gameObject == gameObject);
                 itemObject.Components.Add(new (){id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer});
             }
@@ -126,8 +129,11 @@ namespace DevTools {
         /// <param name="backColor">Background Color.</param>
         /// <param name="offset">Position Offset.</param>
         /// <param name="timer">Time to destroy the text. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawText(string text, Vector3 position, Color textColor, Texture2D backColor, Vector2 offset = new Vector2(), float timer = 0){
-            ListTextData.Add(new DrawTextData{text = text, position = position, color = textColor, texture2D = backColor, positionOff = offset, timer = Time.time + timer});
+        public static void DrawText(string text, Vector3 position, Color textColor, Color backColor, Vector2 offset = new Vector2(), float timer = 0){
+            var Label = new Label(text);
+            Label.style.color = textColor;
+            Label.style.backgroundColor = backColor;
+            ListTextData.Add(new DrawTextData{label = Label, position = position, positionOff = offset, timer = Time.time + timer});
         }
         
         /// <summary>
