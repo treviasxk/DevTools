@@ -444,14 +444,15 @@ namespace DevTools {
                 }
             }
 
+            if(!DevTools.isOpenDevTools && !DevTools.isOpenTerminal && !DevTools.isOpenInspector)
+                cursorLockMode = UnityEngine.Cursor.lockState;
+
             // Open DevTools
             if(playerInput.currentActionMap != null && playerInput.currentActionMap.FindAction("DevTools").triggered){
                 uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = !uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible;
                 DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible || uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible;
-                
                 if(DevTools.isOpenDevTools){
                     StartCount();
-                    cursorLockMode = UnityEngine.Cursor.lockState;
                     isOverlaysTmp = DevTools.isOverlays;
                     DevTools.isOverlays = true;
                     isInspectorTmp = uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible;
@@ -482,8 +483,10 @@ namespace DevTools {
                 if(Terminal.visible){
                     uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
                     Terminal.style.height = Length.Percent(50);
-                }else
+                }else{
+                    UnityEngine.Cursor.lockState = cursorLockMode;
                     Terminal.style.height = Length.Percent(25);
+                }
 
                 if(Terminal.visible)
                     uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
