@@ -82,6 +82,7 @@ namespace DevTools {
         public static void AddComponent(string name, TemplateContainer templateContainer, GameObject gameObject){
             if(!ListGameObjects.Any(item => item.gameObject == gameObject)){
                 var Label = new Label(gameObject.name);
+                Label.pickingMode = PickingMode.Position;
                 Label.style.color = Color.white;
                 Label.style.backgroundColor = new Color(1f, 1f, 1f, 0.1f);
                 ListGameObjects.Add(new(){drawTextData = new DrawTextData(){label = Label, timer = Time.time + 5}, id = gameObject ? gameObject.GetHashCode() : -1, gameObject = gameObject, Components = new(){{new Component(){ id = gameObject ? gameObject.GetHashCode() : -1, name = name, templateContainer = templateContainer}}}});

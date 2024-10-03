@@ -294,6 +294,7 @@ namespace DevTools {
 
                     var Log = Logs.ElementAt(LogCount);
                     Label label = new Label(Log.type == LogsType.Result ? Log.text : (Log.type == LogsType.Success ? "<color=green>[OK] " : (Log.type == LogsType.Warning ? "<color=orange>[WARNING] " : (Log.type == LogsType.Error ? "<color=red>[ERROR] " : "<color=white>[DEBUG] "))) + Log.text + "</color>");
+                    label.pickingMode = PickingMode.Ignore;
                     Terminal.Add(label);
                     LogCount++;
                 }
@@ -343,8 +344,10 @@ namespace DevTools {
                         DevTools.ListGameObjects.Remove(itemObject);
                     }else{
                         if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
-                            if(itemObject.gameObject)
+                            if(itemObject.id != -1){
+                                itemObject.drawTextData.label.RegisterCallback<ClickEvent>((e)=>{SelectedObject = itemObject.gameObject; ShowComponents();});
                                 DevTools.ListTextData.Add(itemObject.drawTextData);
+                            }
                             listObjects.Add(new Button(()=>{SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
                         }else{
                             if(itemObject.gameObject){
@@ -482,10 +485,14 @@ namespace DevTools {
 
                 if(Terminal.visible){
                     uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
+                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").pickingMode = PickingMode.Position;
                     Terminal.style.height = Length.Percent(50);
+                    Terminal.pickingMode = PickingMode.Position;
                 }else{
                     UnityEngine.Cursor.lockState = cursorLockMode;
+                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").pickingMode = PickingMode.Ignore;
                     Terminal.style.height = Length.Percent(25);
+                    Terminal.pickingMode = PickingMode.Ignore;
                 }
 
                 if(Terminal.visible)
@@ -558,8 +565,13 @@ namespace DevTools {
             for(int i = 0; i < DevTools.ListTextData.Count; i++){
                 var textData = DevTools.ListTextData[i];
 
-                if(DevTools.isOverlays){
-                    textData.label.transform.position = RuntimePanelUtils.CameraTransformWorldToPanel(uIDocument.rootVisualElement.Q<VisualElement>("Runtime").panel, textData.position, Camera.main) - new Vector2(textData.label.resolvedStyle.width / 2, textData.label.resolvedStyle.height / 2) + textData.positionOff;
+                // Check if position is front
+                Vector3 displacement = textData.position - Camera.main.transform.position;
+                float dot = Vector3.Dot(displacement, Camera.main.transform.forward);
+
+                if(DevTools.isOverlays && dot > 0){
+                    var point = RuntimePanelUtils.CameraTransformWorldToPanel(uIDocument.rootVisualElement.Q<VisualElement>("Runtime").panel, textData.position, Camera.main) - new Vector2(textData.label.resolvedStyle.width / 2, textData.label.resolvedStyle.height / 2) + textData.positionOff;
+                    textData.label.style.translate = new Translate(point.x, point.y);
                     textData.label.visible = true;
                     if(!uIDocument.rootVisualElement.Contains(textData.label)){
                         textData.label.style.position = Position.Absolute;
