@@ -350,7 +350,7 @@ namespace DevTools {
                             }
                             listObjects.Add(new Button(()=>{SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
                         }else{
-                            if(itemObject.gameObject){
+                            if(itemObject.id != -1){
                                 itemObject.drawTextData.timer = Time.time + 5f;
                                 itemObject.drawTextData.position = itemObject.gameObject.transform.position;
                                 itemObject.drawTextData.label.text = itemObject.gameObject.name;
