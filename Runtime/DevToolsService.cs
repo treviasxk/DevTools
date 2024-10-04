@@ -102,10 +102,8 @@ namespace DevTools {
 
             uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible = false;
             uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = false;
-            uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
-            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
+            uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = false;
             uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = false;
-            uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
 
             uIDocument.rootVisualElement.Q<Label>("title").text = $"{Application.productName} - {Application.companyName}";
             uIDocument.rootVisualElement.Q<Label>("api").text = $"API: {SystemInfo.graphicsDeviceType}";
@@ -125,15 +123,16 @@ namespace DevTools {
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").Clear();
             uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
 
-
             DevTools.AddCommand("Devtools", "prefix", (string[] cmd) => {ShowPrefix();}, "Shows all command prefix.");
             DevTools.AddCommand("Devtools", "clear", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
             DevTools.AddCommand("Devtools", "quit", (string[] cmd) => {Application.Quit();}, "Quit game.");
         }
 
         void ClearTerminal(){
-            if(uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is var Terminal && Terminal != null)
+            if(uIDocument.rootVisualElement != null && uIDocument.rootVisualElement.Q<ScrollView>("Logs") is var Terminal && Terminal != null){
+                Logs.Clear();
                 Terminal.Clear();
+            }
         }
 
         void ShowPrefix(){
@@ -223,7 +222,6 @@ namespace DevTools {
             root.Q<Slider>("TerrainMaxTrees").RegisterCallback<ChangeEvent<float>>((evt) => {QualitySettings.terrainMaxTrees = evt.newValue; ((Slider)evt.currentTarget).label = "TerrainMaxTrees: " + QualitySettings.terrainMaxTrees;});
 
             root.visible = true;
-            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
         }
 
 
@@ -243,8 +241,7 @@ namespace DevTools {
             }
 
 
-            components.visible = true;
-            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = true;
         }
 
         void ShowResolutions(){
@@ -264,9 +261,7 @@ namespace DevTools {
                 }){text = resolutions[i].width + "x" + resolutions[i].height});
             }
 
-            components.visible = true;
-            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
-
+            uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = true;
         }
 
         void ShowComponents(){
@@ -281,8 +276,7 @@ namespace DevTools {
                 }){text = itemComponent.name});
             }
 
-            components.visible = true;
-            uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = true;
+            uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = true;
         }
 
         int LogCount;
@@ -294,7 +288,6 @@ namespace DevTools {
 
                     var Log = Logs.ElementAt(LogCount);
                     Label label = new Label(Log.type == LogsType.Result ? Log.text : (Log.type == LogsType.Success ? "<color=green>[OK] " : (Log.type == LogsType.Warning ? "<color=orange>[WARNING] " : (Log.type == LogsType.Error ? "<color=red>[ERROR] " : "<color=white>[DEBUG] "))) + Log.text + "</color>");
-                    label.pickingMode = PickingMode.Ignore;
                     Terminal.Add(label);
                     LogCount++;
                 }
@@ -346,6 +339,8 @@ namespace DevTools {
                         if(listObjects.childCount == 0 || !listObjects.Children().Any(item => item.name == itemObject.id.ToString())){
                             if(itemObject.id != -1){
                                 itemObject.drawTextData.label.RegisterCallback<ClickEvent>((e)=>{SelectedObject = itemObject.gameObject; ShowComponents();});
+                                itemObject.drawTextData.label.RegisterCallback<MouseEnterEvent>((e) => itemObject.drawTextData.label.style.backgroundColor = new Color(0.5f, 0.5f, 0.5f, 0.1f));
+                                itemObject.drawTextData.label.RegisterCallback<MouseLeaveEvent>((e) => itemObject.drawTextData.label.style.backgroundColor = new Color(1f, 1f, 1f, 0.1f));
                                 DevTools.ListTextData.Add(itemObject.drawTextData);
                             }
                             listObjects.Add(new Button(()=>{SelectedObject = itemObject.gameObject; ShowComponents();}){name = itemObject.id.ToString(), text = itemObject.id != -1 ? itemObject.gameObject.name : "System"});
@@ -470,9 +465,8 @@ namespace DevTools {
                     DevTools.isOverlays = isOverlaysTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = isInspectorTmp;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
-                    uIDocument.rootVisualElement.Q<ScrollView>("Components").visible = false;
+                    uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = false;
                     uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = isTerminalTmp;
-                    uIDocument.rootVisualElement.Q<VisualElement>("BarTitleComponents").visible = false;
                     uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
                 }
                 SelectedObject = null;
@@ -483,22 +477,10 @@ namespace DevTools {
                 DevTools.isOpenTerminal = Terminal.visible;
                 DevTools.isOpenDevTools = uIDocument.rootVisualElement.Q<VisualElement>("DevTools").visible || uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible;
 
-                if(Terminal.visible){
-                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
-                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").pickingMode = PickingMode.Position;
-                    Terminal.style.height = Length.Percent(50);
-                    Terminal.pickingMode = PickingMode.Position;
-                }else{
-                    UnityEngine.Cursor.lockState = cursorLockMode;
-                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").pickingMode = PickingMode.Ignore;
-                    Terminal.style.height = Length.Percent(25);
-                    Terminal.pickingMode = PickingMode.Ignore;
-                }
-
                 if(Terminal.visible)
-                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Auto;
+                    uIDocument.rootVisualElement.Q<TextField>("CommandLine").Focus();
                 else
-                    uIDocument.rootVisualElement.Q<ScrollView>("Logs").verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                    UnityEngine.Cursor.lockState = cursorLockMode;
             }
 
             if(DevTools.isOpenTerminal)
@@ -566,18 +548,17 @@ namespace DevTools {
                 var textData = DevTools.ListTextData[i];
 
                 // Check if position is front
-                Vector3 displacement = textData.position - Camera.main.transform.position;
-                float dot = Vector3.Dot(displacement, Camera.main.transform.forward);
+                float dot = Vector3.Dot(textData.position - Camera.main.transform.position, Camera.main.transform.forward);
 
-                if(DevTools.isOverlays && dot > 0){
+                if(dot > 0 && DevTools.isOverlays){
                     var point = RuntimePanelUtils.CameraTransformWorldToPanel(uIDocument.rootVisualElement.Q<VisualElement>("Runtime").panel, textData.position, Camera.main) - new Vector2(textData.label.resolvedStyle.width / 2, textData.label.resolvedStyle.height / 2) + textData.positionOff;
                     textData.label.style.translate = new Translate(point.x, point.y);
-                    textData.label.visible = true;
                     if(!uIDocument.rootVisualElement.Contains(textData.label)){
                         textData.label.style.position = Position.Absolute;
                         uIDocument.rootVisualElement.Q<VisualElement>("Runtime").Add(textData.label);
                         textData.label.visible = false;
-                    }
+                    }else
+                        textData.label.visible = true;
                 }else
                     textData.label.visible = false;
 

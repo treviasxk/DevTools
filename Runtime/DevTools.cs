@@ -84,8 +84,9 @@ namespace DevTools {
                 Label Label = null;
                 if(gameObject){
                     Label = new Label(gameObject.name);
-                    Label.pickingMode = PickingMode.Position;
                     Label.style.color = Color.white;
+                    Label.style.paddingLeft = 5;
+                    Label.style.paddingRight = 5;
                     Label.style.backgroundColor = new Color(1f, 1f, 1f, 0.1f);
                 }
 

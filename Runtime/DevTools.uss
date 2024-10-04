@@ -355,3 +355,7 @@ GroupBox {
     margin-bottom: 2px;
     margin-left: 0;
 }
+
+.unity-label {
+    color: rgb(255, 255, 255);
+}
