@@ -170,16 +170,16 @@ namespace DevTools {
 
 
         /// <summary>
-        /// Add an overlay Cube to your game world.
+        /// Add an overlay Box to your game world.
         /// </summary>
-        /// <param name="position">World position of the Cube.</param>
-        /// <param name="rotation">World rotation of the Cube.</param>
-        /// <param name="scale">Cube Scale</param>
-        /// <param name="color">Cube Color</param>
+        /// <param name="position">World position of the Box.</param>
+        /// <param name="rotation">World rotation of the Box.</param>
+        /// <param name="scale">Box Scale</param>
+        /// <param name="color">Box Color</param>
         /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawCube(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float opacity = 0.5f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cube, position = position, rotation = rotation, scale = scale, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawBox(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float opacity = 0.5f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Box, position = position, rotation = rotation, scale = scale, color = color, opacity = opacity, timer = Time.time + timer});
         }
 
         /// <summary>

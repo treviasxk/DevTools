@@ -56,7 +56,7 @@ namespace DevTools {
         RenderParams renderParams;
         MaterialPropertyBlock materialPropertyBlock;
         public static Mesh Capsule, Sphere, Cube, Cylinder;
-        public enum ObjectType {Capsule, Sphere, Cube, Cylinder, Line}
+        public enum ObjectType {Capsule, Sphere, Box, Cylinder, Line}
 
         void Awake(){
             SceneManager.sceneLoaded -= sceneLoaded;
@@ -521,7 +521,7 @@ namespace DevTools {
                         case ObjectType.Sphere:
                             Graphics.RenderMesh(renderParams, Sphere, 0, Matrix4x4.TRS(objectData.position, Quaternion.identity, Vector3.one * objectData.radius * 2));
                         break;
-                        case ObjectType.Cube:
+                        case ObjectType.Box:
                             Graphics.RenderMesh(renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale * 2));
                         break;
                         case ObjectType.Capsule:
