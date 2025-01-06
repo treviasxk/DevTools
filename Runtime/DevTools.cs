@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using static DevTools.DevToolsService;
+using static DevTools.DevToolsSystem;
+
 namespace DevTools {
     public struct Component{
         public int id;
@@ -18,56 +20,76 @@ namespace DevTools {
         internal static List<DrawTextData> ListTextData = new List<DrawTextData>();
         internal static List<DrawObjectData> ListObjectsData = new List<DrawObjectData>();
         internal static List<System.Tuple<string, string, System.Action<string[]>, string>> ListCommandLine = new();
-        public static Component CurrentComponent {get{return DevToolsService.CurrentComponent;}}
-        public static GameObject SelectedObject {get{return DevToolsService.SelectedObject;}}
+        public static Component CurrentComponent {get{return DevToolsSystem.CurrentComponent;}}
+        public static GameObject SelectedObject {get{return DevToolsSystem.SelectedObject;}}
         public static bool isOpenDevTools {get;set;} = false;
         public static bool isOpenInspector {get;set;} = false;
         public static bool isOpenTerminal {get;set;} = false;
         public static bool isOverlays {get;set;} = false;
+
+        internal static DevToolsComponent devToolsComponent;
+        internal static GameObject service;
+        internal static RenderParams renderParams;
+        internal static MaterialPropertyBlock materialPropertyBlock;
+
         
         #if UNITY_EDITOR && UBuild
         [InitializeOnLoadMethod]
         static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
         #endif
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
-        static void Clear(){
-            ListCommandLine.Clear();
-            ListTextData.Clear();
-            ListObjectsData.Clear();
-            ListGameObjects.Clear();
+        [InitializeOnLoadMethod]
+        static void LoadMesh(){
+            GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            Capsule = obj.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(obj);
+
+            obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Sphere = obj.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(obj);
+
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Cube = obj.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(obj);
+
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Cylinder = obj.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(obj);
+
+            EditorApplication.playModeStateChanged -= OnExitPlayMode;
+            EditorApplication.playModeStateChanged += OnExitPlayMode;
+        }
+
+        private static void OnExitPlayMode(PlayModeStateChange change){
+            if(change == PlayModeStateChange.EnteredPlayMode
+            || change == PlayModeStateChange.ExitingPlayMode){
+                ListCommandLine.Clear();
+                ListTextData.Clear();
+                ListObjectsData.Clear();
+                ListGameObjects.Clear();
+
+                DevToolsSystem.SelectedObject = null;
+                DevToolsSystem.CurrentComponent = new Component();
+                isOpenInspector = false;
+                isOpenTerminal = false;
+                isOpenDevTools = false;
+                isOverlays = false;
+            }
         }
 
         [RuntimeInitializeOnLoadMethod]
         static void Start(){
-            DevToolsService.SelectedObject = null;
-            DevToolsService.CurrentComponent = new Component();
-            isOpenInspector = false;
-            isOpenTerminal = false;
-            isOpenDevTools = false;
-            isOverlays = false;
-
-            GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            Capsule = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
-
-            obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            Sphere = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
-
-            obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Cube = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
-
-            obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            Cylinder = obj.GetComponent<MeshFilter>().mesh;
-            Object.Destroy(obj);
-
-            GameObject service = new GameObject("[DevTools]");
-            service.AddComponent<DevToolsService>();
+            service = new GameObject("[DevTools]");
+            devToolsComponent = service.AddComponent<DevToolsComponent>();
             service.AddComponent<PlayerInput>();
             service.AddComponent<UIDocument>();
-            service.hideFlags = HideFlags.HideInHierarchy;
+            //service.hideFlags = HideFlags.HideInHierarchy;
+            Object.DontDestroyOnLoad(service);
+
+            materialPropertyBlock = new MaterialPropertyBlock();
+            renderParams = new RenderParams(new Material(Shader.Find("DevTools/Debug"))){matProps = materialPropertyBlock};
+            renderParams.material.enableInstancing = true;
+            renderParams.layer = 2; // 2 = Ignore raycast
         }
 
 
@@ -147,11 +169,10 @@ namespace DevTools {
         /// <param name="from">World position of the first point.</param>
         /// <param name="to">world position of the second point.</param>
         /// <param name="color">Line Color.</param>
-        /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="Size">Line Size.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawLine(Vector3 from, Vector3 to, Color color, float opacity = 1f, float Size = 0.0025f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, radius = Size, position2 = to, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawLine(Vector3 from, Vector3 to, Color color, float Size = 0.0025f, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, radius = Size, position2 = to, color = color, timer = Time.time + timer});
         }
 
 
@@ -161,10 +182,9 @@ namespace DevTools {
         /// <param name="position">World position of the Sphere.</param>
         /// <param name="radius">Radius of the Sphere.</param>
         /// <param name="color">Sphere Color.</param>
-        /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawSphere(Vector3 position, float radius, Color color, float opacity = 0.5f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Sphere, position = position, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawSphere(Vector3 position, float radius, Color color, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Sphere, position = position, radius = radius, color = color, timer = Time.time + timer});
         }
 
 
@@ -175,10 +195,9 @@ namespace DevTools {
         /// <param name="rotation">World rotation of the Box.</param>
         /// <param name="scale">Box Scale</param>
         /// <param name="color">Box Color</param>
-        /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawBox(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float opacity = 0.5f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Box, position = position, rotation = rotation, scale = scale, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawBox(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Box, position = position, rotation = rotation, scale = scale, color = color, timer = Time.time + timer});
         }
 
         /// <summary>
@@ -189,10 +208,9 @@ namespace DevTools {
         /// <param name="radius">Radius of the Capsule.</param>
         /// <param name="height">Height of the Capsule.</param>
         /// <param name="color">Capsule Color</param>
-        /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float opacity = 0.5f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Capsule, position = position, rotation = rotation, height = height, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Capsule, position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
         }
 
         /// <summary>
@@ -203,10 +221,9 @@ namespace DevTools {
         /// <param name="radius">Radius of the Cylinder.</param>
         /// <param name="height">Height of the Cylinder.</param>
         /// <param name="color">Cylinder Color</param>
-        /// <param name="opacity">Opacity value between 0f and 1f.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float opacity = 0.5f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cylinder, position = position, rotation = rotation, height = height, radius = radius, color = color, opacity = opacity, timer = Time.time + timer});
+        public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cylinder, position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
         }
     }
 }
