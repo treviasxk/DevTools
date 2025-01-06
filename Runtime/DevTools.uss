@@ -345,7 +345,6 @@ GroupBox {
 
 #Logs > .unity-label {
     font-size: 10px;
-    -unity-font-definition: url("project://database/Assets/data/textmesh/Fonts/LiberationSans.ttf?fileID=12800000&guid=e3265ab4bf004d28a9537516768c1c75&type=3#LiberationSans");
     padding-top: 0;
     padding-right: 0;
     padding-bottom: 0;
