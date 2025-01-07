@@ -61,23 +61,11 @@ namespace DevTools {
         }
 
         private static void OnExitPlayMode(PlayModeStateChange change){
-            if(change == PlayModeStateChange.EnteredPlayMode
-            || change == PlayModeStateChange.ExitingPlayMode){
-                ListCommandLine.Clear();
-                ListTextData.Clear();
-                ListObjectsData.Clear();
-                ListGameObjects.Clear();
-
-                DevToolsSystem.SelectedObject = null;
-                DevToolsSystem.CurrentComponent = new Component();
-                isOpenInspector = false;
-                isOpenTerminal = false;
-                isOpenDevTools = false;
-                isOverlays = false;
-            }
+            if(change == PlayModeStateChange.ExitingPlayMode)
+                Reset();
         }
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(loadType: RuntimeInitializeLoadType.BeforeSplashScreen)]
         static void Start(){
             service = new GameObject("[DevTools]");
             devToolsComponent = service.AddComponent<DevToolsComponent>();
@@ -90,6 +78,21 @@ namespace DevTools {
             renderParams = new RenderParams(new Material(Shader.Find("DevTools/Debug"))){matProps = materialPropertyBlock};
             renderParams.material.enableInstancing = true;
             renderParams.layer = 2; // 2 = Ignore raycast
+            Reset();
+        }
+
+        static void Reset(){
+            ListCommandLine.Clear();
+            ListTextData.Clear();
+            ListObjectsData.Clear();
+            ListGameObjects.Clear();
+
+            DevToolsSystem.SelectedObject = null;
+            DevToolsSystem.CurrentComponent = new Component();
+            isOpenInspector = false;
+            isOpenTerminal = false;
+            isOpenDevTools = false;
+            isOverlays = false;
         }
 
 
@@ -171,8 +174,8 @@ namespace DevTools {
         /// <param name="color">Line Color.</param>
         /// <param name="Size">Line Size.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
-        public static void DrawLine(Vector3 from, Vector3 to, Color color, float Size = 0.0025f, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, radius = Size, position2 = to, color = color, timer = Time.time + timer});
+        public static void DrawLine(Vector3 from, Vector3 to, Color color, float timer = 0){
+            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, position2 = to, color = color, timer = Time.time + timer});
         }
 
 

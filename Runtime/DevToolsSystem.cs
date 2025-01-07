@@ -344,7 +344,7 @@ namespace DevTools{
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
                             float distance = Vector3.Distance(objectData.position, objectData.position2);
-                            Gizmos.DrawMesh(Cube, objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(objectData.radius, objectData.radius, distance));
+                            Gizmos.DrawMesh(Cube, objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(0.0030f, 0.0030f, distance));
                         break;
                     }
                     if(objectData.timer <= Time.time)
@@ -377,7 +377,7 @@ namespace DevTools{
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
                             float distance = Vector3.Distance(objectData.position, objectData.position2);
-                            Graphics.RenderMesh(DevTools.renderParams, Cube, 0, Matrix4x4.TRS(objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(objectData.radius, objectData.radius, distance)));
+                            Graphics.RenderMesh(DevTools.renderParams, Cube, 0, Matrix4x4.TRS(objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(0.0030f, 0.0030f, distance)));
                         break;
                     }
                     if(objectData.timer <= Time.time)
