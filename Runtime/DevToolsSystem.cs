@@ -56,17 +56,16 @@ namespace DevTools{
         CursorLockMode cursorLockMode;
         int fps, fpsCount, logCount;
         float fpsTimerCount, fpsTimerTmp, timerFps;
-        public static Mesh Capsule, Sphere, Cube, Cylinder;
+        internal static Mesh Capsule, Sphere, Cube, Cylinder;
+        static List<LogContent> Logs = new List<LogContent>();
 
-        void OnCreate(ref SystemState state){
+        [RuntimeInitializeOnLoadMethod(loadType: RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void OnStart(){
             SceneManager.sceneLoaded -= sceneLoaded;
             SceneManager.sceneLoaded += sceneLoaded;
             Application.logMessageReceived -= Log;
             Application.logMessageReceived += Log;
-        }
 
-        [RuntimeInitializeOnLoadMethod(loadType: RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void OnStart(){
             playerInput = DevTools.service.GetComponent<PlayerInput>();
             playerInput.actions = DevTools.devToolsComponent.inputActionsAssets;
             playerInput.currentActionMap = DevTools.devToolsComponent.inputActionsAssets.actionMaps[0];
@@ -101,6 +100,7 @@ namespace DevTools{
             DevTools.AddCommand("Devtools", "clear", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
             DevTools.AddCommand("Devtools", "quit", (string[] cmd) => {Application.Quit();}, "Quit game.");
             Logs.Clear();
+            
         }
 
         void OnUpdate(ref SystemState state){
@@ -387,7 +387,7 @@ namespace DevTools{
         }
 
 
-        private void sceneLoaded(Scene arg0, LoadSceneMode arg1){
+        static void sceneLoaded(Scene arg0, LoadSceneMode arg1){
             var listObjects = DevTools.ListGameObjects.Where(item => item.id == -1).ToArray();
             if(uIDocument.rootVisualElement != null){
                 var root = uIDocument.rootVisualElement.Q<ScrollView>("ListObjects");
@@ -562,9 +562,9 @@ namespace DevTools{
 
             uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = true;
         }
-        static List<LogContent> Logs = new List<LogContent>();
 
-        public void Log(string logString, string stackTrace, LogType type){
+
+        static void Log(string logString, string stackTrace, LogType type){
             Logs.Add(new LogContent(){type = (LogsType)type, text = logString});
         }
 

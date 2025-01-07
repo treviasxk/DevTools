@@ -103,7 +103,7 @@ namespace DevTools {
         /// <param name="name">Component name.</param>
         /// <param name="gameObject">Bind gameobject to component.</param>
         /// <param name="templateContainer">UI Toolkit to be displayed in inspector.</param>
-        public static void AddComponent(string name, TemplateContainer templateContainer, GameObject gameObject){
+        public static void AddComponent(string name, ref TemplateContainer templateContainer, GameObject gameObject){
             if(!ListGameObjects.Any(item => item.gameObject == gameObject)){
                 Label Label = null;
                 if(gameObject){
@@ -126,7 +126,7 @@ namespace DevTools {
         /// </summary>
         /// <param name="name">Component name.</param>
         /// <param name="templateContainer">UI Toolkit to be displayed in inspector.</param>
-        public static void AddComponent(string name, TemplateContainer templateContainer) => AddComponent(name, templateContainer, null);
+        public static void AddComponent(string name, ref TemplateContainer templateContainer) => AddComponent(name, ref templateContainer, null);
 
         /// <summary>
         /// Create commands to be executed when entered into the Terminal.
