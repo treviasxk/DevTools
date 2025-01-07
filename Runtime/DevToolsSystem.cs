@@ -225,7 +225,7 @@ namespace DevTools{
 
 
             // Fixed Update
-            if(uIDocument.rootVisualElement != null){
+            if(DevTools.isOpenDevTools && uIDocument.rootVisualElement != null){
 
                 // Lock scroll
                 if(uIDocument.rootVisualElement.Q<ScrollView>("Logs") is ScrollView TerminalControl && TerminalControl != null)
