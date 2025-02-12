@@ -88,13 +88,12 @@ namespace DevTools{
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowGraphic){text = "Graphic"});
             uIDocument.rootVisualElement.Q<VisualElement>("ListOptions").Add(new Button(ShowResolutions){text = "Resolutions"});
             
-            if(playerInput.currentActionMap != null)
-                uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press " + playerInput.currentActionMap.FindAction("DevTools").GetBindingDisplayString() +" to open/close DevTools." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress " + playerInput.currentActionMap.FindAction("Inspector").GetBindingDisplayString() + " to open/close current Inspector." : "") + "\nPress " + playerInput.currentActionMap.FindAction("Overlays").GetBindingDisplayString()  + " to show/hide Overlays. \nPress " + playerInput.currentActionMap.FindAction("Terminal").GetBindingDisplayString() + " to show/hide Terminal.";
+
             uIDocument.rootVisualElement.Q<VisualElement>("InspectorContent").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Components").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("ListObjects").Clear();
             uIDocument.rootVisualElement.Q<ScrollView>("Logs").Clear();
-            uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
+
 
             DevTools.AddCommand("Devtools", "prefix", (string[] cmd) => {ShowPrefix();}, "Shows all command prefix.");
             DevTools.AddCommand("Devtools", "clear", (string[] cmd) => {ClearTerminal();}, "Clear all Terminal logs.");
@@ -185,7 +184,6 @@ namespace DevTools{
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = true;
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").visible = DevTools.isOpenInspector;
                     uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = DevTools.isOpenTerminal;
-                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "";
                 }else{
                     StopCount();
                     UnityEngine.Cursor.lockState = cursorLockMode;
@@ -194,7 +192,6 @@ namespace DevTools{
                     uIDocument.rootVisualElement.Q<VisualElement>("Inspector").enabledSelf = false;
                     uIDocument.rootVisualElement.Q<VisualElement>("Components").visible = false;
                     uIDocument.rootVisualElement.Q<VisualElement>("Terminal").visible = isTerminalTmp;
-                    uIDocument.rootVisualElement.Q<Label>("Overlay-Label").text = "Press F1 to show/hide Terminal.\n" + "Press F2 to open/close DevTools." + "\nPress F3 to show/hide Overlays." + (!DevTools.CurrentComponent.Equals(new Component()) ? "\nPress F4 to open/close current Inspector." : "");
                 }
                 SelectedObject = null;
             }
