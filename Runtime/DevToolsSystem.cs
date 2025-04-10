@@ -67,7 +67,6 @@ namespace DevTools{
             Application.logMessageReceived += Log;
 
             playerInput = DevTools.service.GetComponent<PlayerInput>();
-            playerInput.actions = DevTools.devToolsComponent.inputActionsAssets;
             playerInput.currentActionMap = DevTools.devToolsComponent.inputActionsAssets.actionMaps[0];
             uIDocument = DevTools.service.GetComponent<UIDocument>();
             uIDocument.visualTreeAsset = DevTools.devToolsComponent.visualTreeAsset;
