@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst;
@@ -33,10 +34,10 @@ namespace DevTools {
         internal static MaterialPropertyBlock materialPropertyBlock;
 
         
-        #if UNITY_EDITOR && UBuild
-        [InitializeOnLoadMethod]
-        static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
-        #endif
+        //#if UNITY_EDITOR && UBuild
+        //[InitializeOnLoadMethod]
+        //static void Init() => UBuild.UBuildEditor.PackagePreConfigBuild.Add("com.treviasxk.devtools", UBuild.PreConfigBuild.Player | UBuild.PreConfigBuild.Development);
+        //#endif
 
         [InitializeOnLoadMethod]
         static void LoadMesh(){
@@ -230,3 +231,4 @@ namespace DevTools {
         }
     }
 }
+#endif
