@@ -14,8 +14,10 @@ DevTools is a tool to help create Debug systems. It has a simple API, organized 
 * Create custom properties for a GameObject in scene.
 * Optimized to run at full performance.
 
-## Donate
- Paypal: trevias@live.com
+## Contribute
+Contributions are welcome! You can fork the repository and submit a pull request or sponsor the project to support its development.
+ - Github: [Sponsor](https://github.com/sponsors/treviasxk)
+ - Paypal: trevias@live.com
 
 ## Installation
 
