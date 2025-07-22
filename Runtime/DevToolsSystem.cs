@@ -332,10 +332,10 @@ namespace DevTools{
                             Gizmos.DrawMesh(Cube, objectData.position, objectData.rotation, objectData.scale * 2);
                         break;
                         case ObjectType.Capsule:
-                            Gizmos.DrawMesh(Capsule, objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2);
+                            Gizmos.DrawMesh(Capsule, objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f);
                         break;
                         case ObjectType.Cylinder:
-                            Gizmos.DrawMesh(Cylinder, objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2);
+                            Gizmos.DrawMesh(Cylinder, objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f);
                         break;
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
@@ -365,10 +365,10 @@ namespace DevTools{
                             Graphics.RenderMesh(DevTools.renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale * 2));
                         break;
                         case ObjectType.Capsule:
-                            Graphics.RenderMesh(DevTools.renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2));
+                            Graphics.RenderMesh(DevTools.renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f));
                         break;
                         case ObjectType.Cylinder:
-                            Graphics.RenderMesh(DevTools.renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, Vector3.one * objectData.radius + Vector3.up * objectData.height * 2));
+                            Graphics.RenderMesh(DevTools.renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f));
                         break;
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
