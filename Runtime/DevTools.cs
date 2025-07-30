@@ -6,9 +6,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using static DevTools.DevToolsSystem;
+using static TreviasXk.DevToolsSystem;
 
-namespace DevTools {
+namespace TreviasXk {
     public struct Component{
         public int id;
         public string name;

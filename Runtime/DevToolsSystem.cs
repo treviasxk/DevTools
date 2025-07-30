@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-namespace DevTools{
+namespace TreviasXk{
     enum LogsType {Log = 3, Warning = 2, Error = 0&1&4, Success = 5, Result = 6}
     struct LogContent{
         public LogsType type;
@@ -58,6 +58,7 @@ namespace DevTools{
         float fpsTimerCount, fpsTimerTmp, timerFps;
         internal static Mesh Capsule, Sphere, Cube, Cylinder;
         static List<LogContent> Logs = new List<LogContent>();
+
 
         [RuntimeInitializeOnLoadMethod(loadType: RuntimeInitializeLoadType.AfterSceneLoad)]
         static void OnStart(){
