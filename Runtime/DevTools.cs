@@ -161,10 +161,13 @@ namespace TreviasXk {
         /// <param name="offset">Position Offset.</param>
         /// <param name="timer">Time to destroy the text. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawText(string text, Vector3 position, Color textColor, Color backColor, Vector2 offset = new Vector2(), float timer = 0){
-            var Label = new Label(text);
-            Label.style.color = textColor;
-            Label.style.backgroundColor = backColor;
-            ListTextData.Add(new DrawTextData{label = Label, position = position, positionOff = offset, timer = Time.time + timer});
+            if (timer == 0 && isOverlays || timer != 0)
+            {
+                var Label = new Label(text);
+                Label.style.color = textColor;
+                Label.style.backgroundColor = backColor;
+                ListTextData.Add(new DrawTextData{label = Label, position = position, positionOff = offset, timer = Time.time + timer});
+            }
         }
         
         /// <summary>
@@ -176,6 +179,7 @@ namespace TreviasXk {
         /// <param name="Size">Line Size.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawLine(Vector3 from, Vector3 to, Color color, float timer = 0){
+            if(timer == 0 && isOverlays || timer != 0)
             ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Line, position = from, position2 = to, color = color, timer = Time.time + timer});
         }
 
@@ -188,7 +192,9 @@ namespace TreviasXk {
         /// <param name="color">Sphere Color.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawSphere(Vector3 position, float radius, Color color, float timer = 0){
-            ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Sphere, position = position, radius = radius, color = color, timer = Time.time + timer});
+            Debug.Log(isOverlays);
+            if (timer == 0 && isOverlays || timer != 0)
+                ListObjectsData.Add(new DrawObjectData { objectType = ObjectType.Sphere, position = position, radius = radius, color = color, timer = Time.time + timer });
         }
 
 
@@ -201,6 +207,7 @@ namespace TreviasXk {
         /// <param name="color">Box Color</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawBox(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float timer = 0){
+            if (timer == 0 && isOverlays || timer != 0)
             ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Box, position = position, rotation = rotation, scale = scale, color = color, timer = Time.time + timer});
         }
 
@@ -214,6 +221,7 @@ namespace TreviasXk {
         /// <param name="color">Capsule Color</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawCapsule(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            if (timer == 0 && isOverlays || timer != 0)
             ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Capsule, position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
         }
 
@@ -227,6 +235,7 @@ namespace TreviasXk {
         /// <param name="color">Cylinder Color</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawCylinder(Vector3 position, Quaternion rotation, float radius, float height, Color color, float timer = 0){
+            if (timer == 0 && isOverlays || timer != 0)
             ListObjectsData.Add(new DrawObjectData{objectType = ObjectType.Cylinder, position = position, rotation = rotation, height = height, radius = radius, color = color, timer = Time.time + timer});
         }
     }

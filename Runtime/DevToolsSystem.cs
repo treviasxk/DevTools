@@ -317,69 +317,75 @@ namespace TreviasXk{
 
         [DrawGizmo(GizmoType.NotInSelectionHierarchy)]
         static void RenderGizmos(Light light, GizmoType gizmoType) {
-            for(int i = 0; i < DevTools.ListObjectsData.Count; i++){
+            for (int i = 0; i < DevTools.ListObjectsData.Count; i++)
+            {
                 var objectData = DevTools.ListObjectsData[i];
 
-                if(!DevTools.isOverlays){
+                if (!DevTools.isOverlays)
+                {
                     objectData.color.a = Mathf.Clamp(objectData.color.a, 0f, 0.75f);
                     Gizmos.color = objectData.color;
-
-                    switch(objectData.objectType){
+                    switch (objectData.objectType)
+                    {
                         case ObjectType.Sphere:
                             //Handles.Label(objectData.position, "Text");
                             Gizmos.DrawMesh(Sphere, objectData.position, Quaternion.identity, Vector3.one * objectData.radius * 2);
-                        break;
+                            break;
                         case ObjectType.Box:
                             Gizmos.DrawMesh(Cube, objectData.position, objectData.rotation, objectData.scale * 2);
-                        break;
+                            break;
                         case ObjectType.Capsule:
                             Gizmos.DrawMesh(Capsule, objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f);
-                        break;
+                            break;
                         case ObjectType.Cylinder:
                             Gizmos.DrawMesh(Cylinder, objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f);
-                        break;
+                            break;
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
                             float distance = Vector3.Distance(objectData.position, objectData.position2);
                             Gizmos.DrawMesh(Cube, objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(0.0030f, 0.0030f, distance));
-                        break;
+                            break;
                     }
-                    if(objectData.timer <= Time.time)
-                        DevTools.ListObjectsData.RemoveAt(i);
+
                 }
+                if(objectData.timer <= Time.time)
+                    DevTools.ListObjectsData.RemoveAt(i);
             }
         }
 
         void RenderObjects(){
-            for(int i = 0; i < DevTools.ListObjectsData.Count; i++){
+            for (int i = 0; i < DevTools.ListObjectsData.Count; i++)
+            {
                 var objectData = DevTools.ListObjectsData[i];
 
-                if(DevTools.isOverlays){
+                if (DevTools.isOverlays)
+                {
                     objectData.color.a = Mathf.Clamp(objectData.color.a, 0f, 0.75f);
                     DevTools.materialPropertyBlock.SetColor("_Color", objectData.color);
-                    
-                    switch(objectData.objectType){
+
+                    switch (objectData.objectType)
+                    {
                         case ObjectType.Sphere:
                             Graphics.RenderMesh(DevTools.renderParams, Sphere, 0, Matrix4x4.TRS(objectData.position, Quaternion.identity, Vector3.one * objectData.radius * 2));
-                        break;
+                            break;
                         case ObjectType.Box:
                             Graphics.RenderMesh(DevTools.renderParams, Cube, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, objectData.scale * 2));
-                        break;
+                            break;
                         case ObjectType.Capsule:
                             Graphics.RenderMesh(DevTools.renderParams, Capsule, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f));
-                        break;
+                            break;
                         case ObjectType.Cylinder:
                             Graphics.RenderMesh(DevTools.renderParams, Cylinder, 0, Matrix4x4.TRS(objectData.position, objectData.rotation, (new Vector3(1f, 0f, 1f) * objectData.radius * 2) + Vector3.up * objectData.height * 0.5f));
-                        break;
+                            break;
                         case ObjectType.Line:
                             Vector3 point = objectData.position - objectData.position2;
                             float distance = Vector3.Distance(objectData.position, objectData.position2);
                             Graphics.RenderMesh(DevTools.renderParams, Cube, 0, Matrix4x4.TRS(objectData.position2 + point.normalized * (distance / 2), Quaternion.LookRotation(point, Vector3.up), new Vector3(0.0030f, 0.0030f, distance)));
-                        break;
+                            break;
                     }
+                }
                     if(objectData.timer <= Time.time)
                         DevTools.ListObjectsData.RemoveAt(i);
-                }
             }
         }
 
