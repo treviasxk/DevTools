@@ -192,7 +192,6 @@ namespace TreviasXk {
         /// <param name="color">Sphere Color.</param>
         /// <param name="timer">Time to destroy the line. (If the value is 0, the text will only appear in 1 frame.)</param>
         public static void DrawSphere(Vector3 position, float radius, Color color, float timer = 0){
-            Debug.Log(isOverlays);
             if (timer == 0 && isOverlays || timer != 0)
                 ListObjectsData.Add(new DrawObjectData { objectType = ObjectType.Sphere, position = position, radius = radius, color = color, timer = Time.time + timer });
         }
